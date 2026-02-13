@@ -18,6 +18,8 @@ uses
   Apm4D.Interceptor.OnClick,
   Apm4D.Interceptor.RESTRequest,
 {$ENDIF}
+  Apm4D.Metricset.Base,
+  Apm4D.Share.Stacktrace,
   Apm4D.Settings.Database,
   Apm4D.Settings.User,
   Apm4D.Settings.Application,
@@ -30,6 +32,8 @@ type
   TApm4DInterceptDataSet = Apm4D.Interceptor.DataSet.TApm4DInterceptDataSet;
   TApm4DInterceptRESTRequest = Apm4D.Interceptor.RESTRequest.TApm4DInterceptRESTRequest;
 {$ENDIF}
+  TApm4DMetricsetClass = Apm4D.Metricset.Base.TApm4DMetricsetClass; 
+  
   /// <summary>
   /// It's a singleton class. You can configure global application settings.
   /// </summary>
@@ -42,9 +46,11 @@ type
     class var FApplication: TApplicationSettings;
     class var FElastic: TElasticSettings;
     class var FLog: TLogSettings;
+    class var FStackTracer: TStackTracerClass;
 {$IFDEF MSWINDOWS}
     class var FInterceptors: TDictionary<TApm4DInterceptorClass, TArray<TClass>>;
 {$ENDIF}
+    class var FMetricsets: TList<TApm4DMetricsetClass>;
   public
     class function Database: TDatabaseSettings; static;
     class function User: TUserSettings; static;
@@ -62,12 +68,28 @@ type
     class procedure RegisterInterceptor(AInterceptor: TApm4DInterceptorClass; AClasses: TArray<TClass>);
     class function GetInterceptors: TDictionary<TApm4DInterceptorClass, TArray<TClass>>;
 {$ENDIF}
+    class procedure AddStackTracer(AStackTracer: TStackTracerClass);
+    class function CreateStackTracer: TStackTracer;
+    /// <summary>
+    /// Register a custom metricset class.
+    /// </summary>
+    class procedure RegisterMetricset(AMetricsetClass: TApm4DMetricsetClass);
+    
+    /// <summary>
+    /// Get all registered metricsets.
+    /// </summary>
+    class function GetMetricsets: TList<TApm4DMetricsetClass>;
+    
+    /// <summary>
+    /// Clear all registered metricsets.
+    /// </summary>
+    class procedure ClearMetricsets;
   end;
 
 implementation
 
 Uses
-{$IFDEF MSWINDOWS} Vcl.Forms, System.Win.ComObj, {$ENDIF}
+{$IFDEF MSWINDOWS} Vcl.Forms, {$ENDIF}
   System.SysUtils, System.DateUtils, System.Variants;
 
 { TApm4DSettings }
@@ -132,6 +154,28 @@ begin
   end;
 end;
 
+class procedure TApm4DSettings.AddStackTracer(AStackTracer: TStackTracerClass);
+begin
+  FLock.Enter;
+  try
+    FStackTracer := AStackTracer;
+  finally
+    FLock.Leave;
+  end;
+end;
+
+class function TApm4DSettings.CreateStackTracer: TStackTracer;
+begin
+  FLock.Enter;
+  try
+    Result := nil;
+    if Assigned(FStackTracer) then
+      Result := FStackTracer.Create; 
+  finally
+    FLock.Leave;
+  end;
+end;
+
 class procedure TApm4DSettings.ReleaseInstance;
 begin
   FLock.Enter;
@@ -150,6 +194,8 @@ begin
     if FInterceptors <> nil then
       FreeAndNil(FInterceptors);
 {$ENDIF}
+    if FMetricsets <> nil then
+      FreeAndNil(FMetricsets);
   finally
     FLock.Leave;
   end;
@@ -214,6 +260,45 @@ begin
 end;
 
 {$ENDIF}
+
+class procedure TApm4DSettings.RegisterMetricset(AMetricsetClass: TApm4DMetricsetClass);
+begin
+  FLock.Enter;
+  try
+    if not Assigned(FMetricsets) then
+      FMetricsets := TList<TApm4DMetricsetClass>.Create;
+    
+    // Avoid duplicates
+    if not FMetricsets.Contains(AMetricsetClass) then
+      FMetricsets.Add(AMetricsetClass);
+  finally
+    FLock.Leave;
+  end;
+end;
+
+class function TApm4DSettings.GetMetricsets: TList<TApm4DMetricsetClass>;
+begin
+  FLock.Enter;
+  try
+    if not Assigned(FMetricsets) then
+      FMetricsets := TList<TApm4DMetricsetClass>.Create;
+    
+    Result := FMetricsets;
+  finally
+    FLock.Leave;
+  end;
+end;
+
+class procedure TApm4DSettings.ClearMetricsets;
+begin
+  FLock.Enter;
+  try
+    if Assigned(FMetricsets) then
+      FMetricsets.Clear;
+  finally
+    FLock.Leave;
+  end;
+end;
 
 initialization
 

@@ -541,17 +541,82 @@ Transaction: ProcessarPedido
 
 ### Métricas do Sistema
 
-Métricas são coletadas automaticamente a cada 30 segundos:
+#### Métricas Padrão (Automáticas)
 
-```delphi
-// Não precisa fazer nada, métricas são enviadas automaticamente!
-```
+As métricas do sistema são coletadas automaticamente a cada 30 segundos. O metricset padrão (`TApm4DMetricsetSystem`) já vem registrado automaticamente.
 
 **Métricas disponíveis:**
 - `system.memory.total`: Memória total do sistema (bytes)
 - `system.memory.actual.free`: Memória livre disponível (bytes)
 - `system.cpu.total.norm.pct`: CPU total do sistema (0-1)
 - `system.process.cpu.total.norm.pct`: CPU do processo (0-1)
+
+#### Metricsets Customizados
+
+Você pode criar e registrar seus próprios metricsets para coletar métricas de negócio:
+
+**1. Criar seu Metricset:**
+
+```delphi
+uses
+  Apm4D.Metricset.Base;
+
+type
+  TMyBusinessMetricset = class(TApm4DMetricsetBase)
+  protected
+    procedure CollectMetrics; override;
+  end;
+
+implementation
+
+procedure TMyBusinessMetricset.CollectMetrics;
+begin
+  // Métricas de negócio
+  FSamples.AddDecimalGauge('myapp.active.users', GetActiveUsers);
+  FSamples.AddPercentageGauge('myapp.cache.hit.rate', GetCacheHitRate);
+  FSamples.AddBytesGauge('myapp.cache.size', GetCacheSize);
+  
+  // Métrica customizada com unidade
+  FSamples.AddCustom('myapp.response.time', msuMillis, gauge, GetAvgResponseTime);
+  
+  // Histograma (para percentis)
+  FSamples.AddHistogram('myapp.order.value', msuUnknown, GetOrderValues);
+end;
+```
+
+**2. Registrar o Metricset:**
+
+```delphi
+// Na inicialização da aplicação
+TApm4DSettings.RegisterMetricset(TMyBusinessMetricset);
+
+// Para remover o metricset padrão (se não quiser):
+TApm4DSettings.ClearMetricsets;
+TApm4DSettings.RegisterMetricset(TMyBusinessMetricset); // Só o customizado
+
+// Para adicionar múltiplos metricsets:
+TApm4DSettings.RegisterMetricset(TApm4DMetricsetSystem);  // Padrão
+TApm4DSettings.RegisterMetricset(TMyBusinessMetricset);   // Customizado 1
+TApm4DSettings.RegisterMetricset(TMyOtherMetricset);      // Customizado 2
+```
+
+**3. Os metricsets registrados serão coletados automaticamente!**
+
+#### Tipos de Métricas
+
+- **Gauge**: Valor atual (ex: usuários ativos, memória usada)
+- **Counter**: Valor incremental (ex: total de requisições)
+- **Histogram**: Distribuição de valores (ex: tempos de resposta)
+
+#### Unidades Disponíveis
+
+- `msuPercent`: Porcentagem (0-100, convertido para 0-1)
+- `msuByte`: Bytes
+- `msuMillis`: Milissegundos
+- `msuSecunds`: Segundos
+- `msuMinuts`: Minutos
+- `msuHours`: Horas
+- `msuDays`: Dias
 
 ---
 

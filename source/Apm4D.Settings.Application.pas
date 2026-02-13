@@ -22,8 +22,8 @@ type
 implementation
 
 Uses
-{$IFDEF MSWINDOWS} Winapi.Windows, Vcl.Forms, System.Win.ComObj, {$ENDIF}
-System.IOUtils, System.SysUtils, System.DateUtils, System.Variants;
+{$IFDEF MSWINDOWS} Winapi.Windows, Vcl.Forms, {$ENDIF}
+System.IOUtils, System.SysUtils;
 
 { TApplicationSettings }
 

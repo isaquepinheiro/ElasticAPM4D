@@ -10,8 +10,8 @@ unit Apm4D.Interceptor.OnClick;
 interface
 
 uses
-  System.Variants, Generics.Collections, Vcl.Graphics, Vcl.Controls, Vcl.Forms, Vcl.Dialogs, System.Actions, Vcl.ActnList,
-  System.Classes, Data.DB, Apm4D.Interceptor, Vcl.Menus, Vcl.StdCtrls;
+  System.Variants, Generics.Collections, Vcl.Controls, System.Actions, Vcl.ActnList,
+  System.Classes, Data.DB, Apm4D.Interceptor;
 
 type
   TApm4DInterceptOnClick = class(TApm4DInterceptor)
@@ -67,9 +67,9 @@ begin
 
     IsSpan := TApm4D.ExistsTransaction;
     if IsSpan then
-      TApm4D.StartSpan(FOwner.Name + '.' + GetControlName(FControl) + '.Click', 'UI.Click')
+      TApm4D.StartSpan(FOwner.Name + '.' + GetControlName(FControl) + '.Click', 'UI')
     else
-      TApm4D.StartTransaction(FOwner.Name + '.' + GetControlName(FControl) + '.Click', 'UI.Click');
+      TApm4D.StartTransaction(FOwner.Name + '.' + GetControlName(FControl) + '.Click', 'UI');
     try
       if Assigned(FOnClick) then
         FOnClick(Sender);

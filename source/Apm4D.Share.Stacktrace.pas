@@ -37,6 +37,14 @@ type
     property Vars: TObject read Fvars write Fvars;
   end;
 
+  TStackTracer = class abstract
+  public
+     function Get: TArray<TStacktrace>; virtual; abstract;
+     function GetCulprit: string; virtual; abstract;
+  end;
+
+  TStackTracerClass = class of TStackTracer;
+
 implementation
 
 end.

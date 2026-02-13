@@ -33,8 +33,7 @@ type
 
 implementation
 
-uses
-  Apm4D;
+
 
 class function TApm4DInterceptDBConnection.IsCompatible(AComponent: TComponent): Boolean;
 begin

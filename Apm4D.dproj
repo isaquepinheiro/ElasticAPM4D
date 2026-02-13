@@ -135,6 +135,7 @@
         <DCCReference Include="source\Apm4D.Interceptor.OnClick.pas"/>
         <DCCReference Include="source\Apm4D.Interceptor.DataSet.pas"/>
         <DCCReference Include="source\Apm4D.Interceptor.DBConnection.pas"/>
+        <DCCReference Include="source\Apm4D.Interceptor.RESTRequest.pas"/>
         <DCCReference Include="source\Apm4D.Interceptor.Handler.pas"/>
         <DCCReference Include="source\Apm4D.Log.pas"/>
         <DCCReference Include="source\Apm4D.Metadata.Cloud.Account.pas"/>
@@ -146,9 +147,6 @@
         <DCCReference Include="source\Apm4D.Metadata.pas"/>
         <DCCReference Include="source\Apm4D.Metadata.Process.pas"/>
         <DCCReference Include="source\Apm4D.Metadata.System.pas"/>
-        <DCCReference Include="source\Apm4D.Metricset.Defaults.pas"/>
-        <DCCReference Include="source\Apm4D.Metricset.pas"/>
-        <DCCReference Include="source\Apm4D.Metricset.Samples.pas"/>
         <DCCReference Include="source\Apm4D.pas"/>
         <DCCReference Include="source\Apm4D.QueueSingleton.pas"/>
         <DCCReference Include="source\Apm4D.SendThread.pas"/>
@@ -191,6 +189,10 @@
         <DCCReference Include="source\Apm4D.Transaction.pas"/>
         <DCCReference Include="source\Apm4D.Transaction.Session.pas"/>
         <DCCReference Include="source\Apm4D.Transaction.SpanCount.pas"/>
+        <DCCReference Include="source\Apm4D.Metricset.Base.pas"/>
+        <DCCReference Include="source\Apm4D.Metricset.Defaults.pas"/>
+        <DCCReference Include="source\Apm4D.Metricset.Formatter.pas"/>
+        <DCCReference Include="source\Apm4D.Metricset.pas"/>
         <BuildConfiguration Include="Base">
             <Key>Base</Key>
         </BuildConfiguration>

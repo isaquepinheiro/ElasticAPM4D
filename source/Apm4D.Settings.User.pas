@@ -22,7 +22,7 @@ type
 implementation
 
 Uses
-{$IFDEF MSWINDOWS} Winapi.Windows, Vcl.Forms, System.Win.ComObj, {$ENDIF}
+{$IFDEF MSWINDOWS} Winapi.Windows, {$ENDIF}
   System.SysUtils, System.DateUtils, System.Variants;
 
 { TUserSettings }

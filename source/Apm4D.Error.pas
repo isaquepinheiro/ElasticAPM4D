@@ -48,21 +48,32 @@ type
 implementation
 
 uses
-  System.SysUtils, Apm4D.Share.Uuid, Apm4D.Share.TimestampEpoch, Apm4D.Share.Stacktrace.Jcl;
+  System.SysUtils, Apm4D.Share.Uuid, Apm4D.Share.TimestampEpoch, Apm4D.Settings;
 
 { TError }
 
 constructor TError.Create(const ATraceId, ATransactionId, AParentId: string);
+var 
+  StackTrace: TStackTracer;
 begin
   FId := TUUid.Get128b;
   FException := TErrorException.Create;
-  FException.Stacktrace := TStacktraceJCL.Get;
   Fcontext := TContext.Create;
-  FCulprit := TStacktraceJCL.GetLastMethod(FException.Stacktrace);
   FTimestamp := TTimestampEpoch.Get(now);
   FTrace_id := ATraceId;
   FTransaction_id := ATransactionId;
   FParent_id := AParentId;
+  FCulprit := '';
+  StackTrace := TApm4DSettings.CreateStackTracer;
+  try
+  if assigned(StackTrace) then
+  begin
+    FException.Stacktrace := StackTrace.Get;
+    FCulprit := StackTrace.GetCulprit
+  end; 
+  finally
+    StackTrace.Free;
+  end;
 end;
 
 destructor TError.Destroy;

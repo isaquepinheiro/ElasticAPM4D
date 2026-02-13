@@ -14,8 +14,11 @@ uses
   Apm4D.Share.Stacktrace;
 
 type
-  TStacktraceJCL = class
+  TStacktraceJCL = class(TStackTracer)
+  private const
+    MAX_FRAMES = 15; // Limit stacktrace to 15 most relevant frames
   private
+    FStackTrace: TArray<TStacktrace>; 
     function ExtractValue(const AStr, ARegEX: string): string;
     function GetLine(const AStr: string): Integer;
     function GetUnitName(const AStr: string): string;
@@ -25,8 +28,10 @@ type
     function IsValidStacktrace(const AStr: string): Boolean;
     function IsIgnoreUnit(const AUnitName: string): Boolean;
   public
-    class function Get: TArray<TStacktrace>;
-    class function GetLastMethod(AStackList: TArray<TStacktrace>): string;
+    constructor Create;
+
+    function Get: TArray<TStacktrace>; override;
+    function GetCulprit: string; override;
   end;
 
 implementation
@@ -39,6 +44,48 @@ uses
 {$ENDIF} System.IOUtils, System.SysUtils, System.Rtti, System.RegularExpressions;
 
 { TStacktraceJCL }
+
+constructor TStacktraceJCL.Create;
+var
+  StackList: TStringList;
+  Stacktrace: TStacktrace;
+  Line: Integer;
+  JclStackTrace: TStacktraceJCL;
+  FrameCount: Integer;
+begin
+  FStackTrace := [];
+  FrameCount := 0;
+  JclStackTrace := TStacktraceJCL.Create;
+  StackList := JclStackTrace.GetStackList;
+  try
+    for Line := 0 to Pred(StackList.Count) do
+    begin
+      if FrameCount >= MAX_FRAMES then
+        Break; // Stop after collecting enough frames
+        
+      if not JclStackTrace.IsValidStacktrace(StackList.Strings[Line]) then
+        Continue;
+
+      Stacktrace := TStacktrace.Create;
+      Stacktrace.lineno := JclStackTrace.GetLine(StackList.Strings[Line]);
+      Stacktrace.module := JclStackTrace.GetClassName(StackList.Strings[Line]);
+      Stacktrace.filename := JclStackTrace.GetUnitName(StackList.Strings[Line]);
+      Stacktrace.Context_line := JclStackTrace.GetContextLine(StackList.Strings[Line]);
+
+      if JclStackTrace.IsIgnoreUnit(Stacktrace.filename) then
+      begin
+        Stacktrace.Free;
+        Continue;
+      end;
+      
+      FStackTrace := FStackTrace + [Stacktrace];
+      Inc(FrameCount);
+    end;
+  finally
+    StackList.Free;
+    JclStackTrace.Free;
+  end;  
+end;
 
 function TStacktraceJCL.IsValidStacktrace(const AStr: string): Boolean;
 begin
@@ -68,14 +115,14 @@ begin
     Result := Result + ')';
 end;
 
-class function TStacktraceJCL.GetLastMethod(AStackList: TArray<TStacktrace>): string;
+function TStacktraceJCL.GetCulprit: string;
 var
   Stack: TStacktrace;
   List: TArray<string>;
 begin
-  if Length(AStackList) = 0 then
+  if Length(FStackTrace) = 0 then
     Exit('');
-  Stack := AStackList[0];
+  Stack := FStackTrace[0];
   List := Stack.Context_line.Remove(Pos('(', Stack.Context_line) - 1).Split(['.']);
   Result := List[Length(List) - 1];
 end;
@@ -144,68 +191,15 @@ var
 begin
   for Current in Units do
   begin
-    Result := AUnitName.ToLower.Trim.StartsWith(Current);
+    Result := AUnitName.ToLower.Trim.StartsWith(Current.ToLower);
     if Result then
       Exit;
   end;
-//
-//  if TApm4DConfig.Instance.Stacktrace.IgnoreUnitsStackTraceSet = [] then
-//    Exit(False);
-//
-//  for Ignore := Low(TIgnoreUnitsStackTrace) to High(TIgnoreUnitsStackTrace) do
-//  begin
-//    if Ignore in TApm4DConfig.Instance.Stacktrace.IgnoreUnitsStackTraceSet then
-//    begin
-//      Result := AUnitName.ToLower.StartsWith(
-//        TRttiEnumerationType.GetName<TIgnoreUnitsStackTrace>(Ignore).Replace('iust', '', []).ToLower);
-//      if Result then
-//        Exit;
-//    end;
-//  end;
 end;
 
-class function TStacktraceJCL.Get: TArray<TStacktrace>;
-const
-  MAX_FRAMES = 15; // Limit stacktrace to 15 most relevant frames
-var
-  StackList: TStringList;
-  Stacktrace: TStacktrace;
-  Line: Integer;
-  JclStackTrace: TStacktraceJCL;
-  FrameCount: Integer;
+function TStacktraceJCL.Get: TArray<TStacktrace>;
 begin
-  Result := [];
-  FrameCount := 0;
-  JclStackTrace := TStacktraceJCL.Create;
-  StackList := JclStackTrace.GetStackList;
-  try
-    for Line := 0 to Pred(StackList.Count) do
-    begin
-      if FrameCount >= MAX_FRAMES then
-        Break; // Stop after collecting enough frames
-        
-      if not JclStackTrace.IsValidStacktrace(StackList.Strings[Line]) then
-        Continue;
-
-      Stacktrace := TStacktrace.Create;
-      Stacktrace.lineno := JclStackTrace.GetLine(StackList.Strings[Line]);
-      Stacktrace.module := JclStackTrace.GetClassName(StackList.Strings[Line]);
-      Stacktrace.filename := JclStackTrace.GetUnitName(StackList.Strings[Line]);
-      Stacktrace.Context_line := JclStackTrace.GetContextLine(StackList.Strings[Line]);
-
-      if JclStackTrace.IsIgnoreUnit(Stacktrace.filename) then
-      begin
-        Stacktrace.Free;
-        Continue;
-      end;
-      
-      Result := Result + [Stacktrace];
-      Inc(FrameCount);
-    end;
-  finally
-    StackList.Free;
-    JclStackTrace.Free;
-  end;
+  Result := FStackTrace; 
 end;
 
 end.

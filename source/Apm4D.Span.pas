@@ -73,7 +73,7 @@ implementation
 { TSpan }
 
 uses
-  Apm4D.Share.Stacktrace.Jcl, System.SysUtils, System.DateUtils, Apm4D.Share.Uuid, Apm4D.Share.TimestampEpoch;
+  Apm4D.Settings, Apm4D.Share.Stacktrace.Jcl, System.SysUtils, System.DateUtils, Apm4D.Share.Uuid, Apm4D.Share.TimestampEpoch;
 
 constructor TSpan.Create(const ATraceId, ATransactionId, AParentId: string);
 begin
@@ -123,11 +123,23 @@ begin
 end;
 
 procedure TSpan.ToEnd;
+var
+  StackTrace: TStackTracer;
 begin
   if FIsPaused then
     UnPause;
-  FStacktrace := TStacktraceJCL.Get;
+  // FStacktrace := TStacktraceJCL.Get;
   FDuration := MilliSecondsBetween(now, FStartDate) - FPausedDuration;
+
+  StackTrace := TApm4DSettings.CreateStackTracer;
+  try
+    if assigned(StackTrace) then
+    begin
+      FStacktrace := StackTrace.Get;
+    end;
+  finally
+    StackTrace.Free;
+  end;
   // Set default outcome if not already set
   if Foutcome.IsEmpty then
     Foutcome := 'success';

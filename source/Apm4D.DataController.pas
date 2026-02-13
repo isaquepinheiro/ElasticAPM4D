@@ -15,23 +15,8 @@ uses
 
 type
   TDataController = class
-  private type
-    TXndJson = class
-    strict private
-    const
-      XndJsonSeparator = sLineBreak;
-    strict private
-      FValue: Widestring;
-    public
-      procedure Add(ASpans: TList<TSpan>); overload;
-      procedure Add(AMetadata: TMetadata); overload;
-      procedure Add(ATransaction: TTransaction); overload;
-      procedure Add(AErrors: TList<TError>); overload;
-      procedure Add(ALogs: TList<TAPMLog>); overload;
-      procedure Add(AMetricSet: string); overload;
-
-      function Value: Widestring;
-    end;
+  private const
+    XndJsonSeparator = sLineBreak;
   private
     FMetadata: TMetadata;
     FTransaction: TTransaction;
@@ -55,13 +40,11 @@ type
     function CurrentSpan: TSpan;
     procedure PauseAllOpenedSpans;
     procedure EndSpan;
+    function HasErrors: boolean;
 
-    property Metadata: TMetadata read FMetadata;
     property Transaction: TTransaction read FTransaction write FTransaction;
-    property SpanList: TObjectList<TSpan> read FSpanList;
     property ErrorList: TObjectList<TError> read FErrorList;
-    property LogList: TObjecTList<TAPMLog> read FLogList;
-    property OpenSpanStack: TList read FOpenSpanStack write FOpenSpanStack;
+    property LogList: TObjectList<TAPMLog> read FLogList;
     property Header: string read GetHeader write SetHeader;
   end;
 
@@ -69,64 +52,7 @@ implementation
 
 
 uses
-  System.DateUtils, Apm4D.Settings, Apm4D.QueueSingleton, Apm4D.Metricset.Defaults;
-
-{ TController.TXndJson }
-
-procedure TDataController.TXndJson.Add(ASpans: TList<TSpan>);
-var
-  Span: TSpan;
-begin
-  if not Assigned(ASpans) then
-    exit;
-  for Span in ASpans.List do
-    if Span <> nil then
-      FValue := FValue + XndJsonSeparator + Span.ToJsonString;
-end;
-
-procedure TDataController.TXndJson.Add(AMetadata: TMetadata);
-begin
-  FValue := AMetadata.ToJsonString;
-end;
-
-procedure TDataController.TXndJson.Add(AErrors: TList<TError>);
-var
-  Error: TError;
-begin
-  if not Assigned(AErrors) then
-    exit;
-  for Error in AErrors.List do
-    if Error <> nil then
-      FValue := FValue + XndJsonSeparator + Error.ToJsonString;
-end;
-
-procedure TDataController.TXndJson.Add(ALogs: TList<TAPMLog>);
-var
-  LogEntry: TAPMLog;
-begin
-  if not Assigned(ALogs) then
-    exit;
-  for LogEntry in ALogs.List do
-    if LogEntry <> nil then
-      FValue := FValue + XndJsonSeparator + LogEntry.ToJsonString;
-end;
-
-procedure TDataController.TXndJson.Add(ATransaction: TTransaction);
-begin
-  FValue := FValue + XndJsonSeparator + ATransaction.ToJsonString;
-end;
-
-procedure TDataController.TXndJson.Add(AMetricSet: string);
-begin
-  if AMetricSet.IsEmpty then
-    exit;
-  FValue := FValue + XndJsonSeparator + AMetricSet;
-end;
-
-function TDataController.TXndJson.Value: Widestring;
-begin
-  Result := FValue;
-end;
+  System.DateUtils, StrUtils, Apm4D.Settings, Apm4D.QueueSingleton, Apm4D.Metricset, System.Threading;
 
 constructor TDataController.Create;
 begin
@@ -135,7 +61,7 @@ begin
   FSpanList := TObjectList<TSpan>.Create;
   FOpenSpanStack := TList.Create;
   FErrorList := TObjectList<TError>.Create;
-  FLogList := TObjecTList<TAPMLog>.Create;
+  FLogList := TObjectList<TAPMLog>.Create;
   FHeader := '';
 end;
 
@@ -148,8 +74,10 @@ begin
 end;
 
 procedure TDataController.PauseAllOpenedSpans;
+var 
+  I: Integer;
 begin
-  for var I := 0 to FOpenSpanStack.Count - 1 do
+  for I := 0 to FOpenSpanStack.Count - 1 do
     TSpan(FOpenSpanStack.Items[I]).Pause;
 end;
 
@@ -176,18 +104,18 @@ begin
   if SpanIsOpened then
     Result := TSpan.Create(CurrentSpan.trace_id, CurrentSpan.transaction_id, CurrentSpan.id)
   else
-    Result := TSpan.Create(Transaction.trace_id, Transaction.id, Transaction.id);
+    Result := TSpan.Create(FTransaction.trace_id, FTransaction.id, FTransaction.id);
 
   // Calcula a duração de pausa da Transaction até o momento
-  TransactionPausedDuration := Transaction.GetPausedDuration;
-  if Transaction.IsPaused then
-    TransactionPausedDuration := TransactionPausedDuration + MilliSecondsBetween(now, Transaction.GetPauseStartDate);
+  TransactionPausedDuration := FTransaction.GetPausedDuration;
+  if FTransaction.IsPaused then
+    TransactionPausedDuration := TransactionPausedDuration + MilliSecondsBetween(now, FTransaction.GetPauseStartDate);
 
   Result.Start(AName, AType, TransactionPausedDuration);
 
-  SpanList.Add(Result);
-  OpenSpanStack.Add(Result);
-  Transaction.span_count.Inc;
+  FSpanList.Add(Result);
+  FOpenSpanStack.Add(Result);
+  FTransaction.span_count.Inc;
 end;
 
 function TDataController.GetHeader: string;
@@ -202,34 +130,100 @@ begin
   end
 end;
 
+function TDataController.HasErrors: boolean;
+begin
+  Result := (FErrorList.Count > 0);
+end;
+
 procedure TDataController.ToQueue;
 var
-  Json: TXndJson;
+  MetadataJson, TransactionJson, SpansJson, ErrorsJson, LogsJson: string;
+  Tasks: array [0 .. 4] of ITask;
+  Value: Widestring;
 begin
   if not TApm4DSettings.IsActive then
     exit;
 
-  Json := TXndJson.Create;
-  try
-    Json.Add(FMetadata);
-    Json.Add(FTransaction);
-    Json.Add(FSpanList);
-    Json.Add(FErrorList);
-    Json.Add(FLogList);
-    Json.Add(TMetricSetDefaults.Get);
+  // Serialize objects in parallel for better performance
+  Tasks[0] := TTask.Create(
+    procedure
+    begin
+      MetadataJson := FMetadata.ToJsonString;
+    end);
 
-    TQueueSingleton.StackUp(Json.Value, Header);
-  finally
-    FHeader := '';
-    Json.Free;
-  end;
+  Tasks[1] := TTask.Create(
+    procedure
+    begin
+      TransactionJson := FTransaction.ToJsonString;
+    end);
+
+  Tasks[2] := TTask.Create(
+    procedure
+    var
+      Span: TSpan;
+    begin
+      SpansJson := '';
+      if Assigned(FSpanList) then
+        for Span in FSpanList do
+          if Span <> nil then
+            SpansJson := SpansJson + IfThen(not SpansJson.IsEmpty, XndJsonSeparator) + Span.ToJsonString;
+    end);
+
+  Tasks[3] := TTask.Create(
+    procedure
+    var
+      Error: TError;
+    begin
+      ErrorsJson := '';
+      if Assigned(FErrorList) then
+        for Error in FErrorList do
+          if Error <> nil then
+            ErrorsJson := ErrorsJson + IfThen(not ErrorsJson.IsEmpty, XndJsonSeparator) + Error.ToJsonString;
+    end);
+
+  Tasks[4] := TTask.Create(
+    procedure
+    var
+      LogEntry: TAPMLog;
+    begin
+      LogsJson := '';
+      if Assigned(FLogList) then
+        for LogEntry in FLogList do
+          if LogEntry <> nil then
+            LogsJson := LogsJson + IfThen(not LogsJson.IsEmpty, XndJsonSeparator) + LogEntry.ToJsonString;
+    end);
+
+  // Start all tasks
+  for var Task in Tasks do
+    Task.Start;
+
+  // Wait for all serializations to complete
+  TTask.WaitForAll(Tasks);
+
+  // Add serialized content in correct order
+  Value :=
+    MetadataJson + XndJsonSeparator + TransactionJson +
+    IfThen(not SpansJson.IsEmpty, XndJsonSeparator) + SpansJson +
+    IfThen(not ErrorsJson.IsEmpty, XndJsonSeparator) + ErrorsJson +
+    IfThen(not LogsJson.IsEmpty, XndJsonSeparator) + LogsJson;
+
+  // Collect metrics (already parallel internally)
+  TMetricSets.CollectAsync(
+    procedure(AMetric: string)
+    begin
+      if not AMetric.IsEmpty then
+        Value := Value + XndJsonSeparator + AMetric;
+    end);
+
+  TQueueSingleton.StackUp(Value, Header);
+  FHeader := '';
 end;
 
 procedure TDataController.EndSpan;
 begin
   CurrentSpan.ToEnd;
-  OpenSpanStack.Delete(Pred(OpenSpanStack.Count));
-  Transaction.span_count.Dec;
+  FOpenSpanStack.Delete(Pred(FOpenSpanStack.Count));
+  FTransaction.span_count.Dec;
 end;
 
 function TDataController.ExtractParentID: string;

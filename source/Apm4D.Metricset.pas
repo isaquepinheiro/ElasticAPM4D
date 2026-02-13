@@ -10,52 +10,65 @@ unit Apm4D.Metricset;
 interface
 
 uses
-  Apm4D.Metricset.Samples;
+  System.SysUtils, Classes, Generics.Collections,
+  System.Threading;
 
 type
-  TMetricSetType = (gauge, counter, histogram);
-
-  TMetricSetUnit = (msuUnknown, msuPercent, msuByte, msuNanos, msuMicros,
-    msuMicrossecunds, msuSecunds, msuMinuts, msuHours, msuDays);
-
-  // Samples hold application metrics collected from the agent
   TMetricSets = class
-  private
-    FSamples: TMetricsetSamples;
   public
-    constructor Create; virtual;
-    destructor Destroy; override;
-
-    property Samples: TMetricsetSamples read FSamples;
-
-    function ToJsonString: string;
+    class procedure CollectAsync(AOnCollect: TProc<string>);
   end;
 
 implementation
 
 uses
-  System.SysUtils, Apm4D.Share.TimestampEpoch;
+  Apm4D.Metricset.Base, Apm4D.Settings;
 
 { TMetricSet }
 
-constructor TMetricSets.Create;
+class procedure TMetricSets.CollectAsync(AOnCollect: TProc<string>);
+var
+  MetricsetClasses: TList<TApm4DMetricsetClass>;
+  Tasks: array of ITask;
+  I: Integer;
 begin
-  FSamples := TMetricsetSamples.Create;
-end;
+  MetricsetClasses := TApm4DSettings.GetMetricsets;
+  if not Assigned(MetricsetClasses) or (MetricsetClasses.Count = 0) then
+    Exit;
 
-destructor TMetricSets.Destroy;
-begin
-  FSamples.Free;
-  inherited;
-end;
-
-function TMetricSets.ToJsonString: string;
-const
-  JSON_STR = '{"metricset":{"timestamp":%d,%s}}';
-begin
-  // Metricset inherits service information from metadata sent at stream start
-  // We don't need to include service here as it would be redundant
-  Result := format(JSON_STR, [TTimestampEpoch.Get(now), FSamples.ToJsonString]);
+  // Create parallel tasks for each metricset
+  SetLength(Tasks, MetricsetClasses.Count);
+  
+  for I := 0 to MetricsetClasses.Count - 1 do
+  begin
+    Tasks[I] := TTask.Create(
+      procedure
+      var
+        Metricset: TApm4DMetricsetBase;
+        JsonString: string;
+        MetricsetClass: TApm4DMetricsetClass;
+      begin
+        MetricsetClass := MetricsetClasses[I];
+        Metricset := MetricsetClass.Create;
+        try
+          JsonString := Metricset.ToJsonString;
+          // Call the callback in a thread-safe manner
+          TThread.Queue(nil, 
+            procedure
+            begin
+              AOnCollect(JsonString);
+            end
+          );
+        finally
+          Metricset.Free;
+        end;
+      end
+    );
+    Tasks[I].Start;
+  end;
+  
+  // Wait for all tasks to complete
+  TTask.WaitForAll(Tasks);
 end;
 
 end.

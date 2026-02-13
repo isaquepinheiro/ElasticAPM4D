@@ -5,12 +5,12 @@
 {          Developed by Juliano Eichelberger            }
 {                                                       }
 {*******************************************************}
-unit Apm4D.Metricset.Samples;
+unit Apm4D.Metricset.Formatter;
 
 interface
 
-uses 
-  Classes, Rtti, SysUtils, StrUtils, REST.Json;
+uses
+  Classes, SysUtils, StrUtils;
 
 type
   TSampleType = (gauge, counter, histogram);
@@ -18,7 +18,7 @@ type
   TSampleUnit = (
     msuUnknown, msuPercent, msuByte, msuNanos, msuMicros, msuMicrossecunds, msuSecunds, msuMinuts, msuHours, msuDays);
 
-  TMetricsetSamples = class
+  TMetricsetFormatter = class
   private
     FList: TStringList;
     function UnitToString(const AUnit: TSampleUnit): string;
@@ -40,6 +40,8 @@ type
     procedure AddDecimalGauge(const AName: string; const AValue: Currency);
     procedure AddHistogram(const AName: string; const AUnit: TSampleUnit; const AValues: TArray<Currency>);
     procedure AddCustom(const AName: string; const AUnit: TSampleUnit; const AType: TSampleType; const AValue: Currency);
+    
+    procedure Clear;
 
     function ToJsonString: string;
   end;
@@ -53,15 +55,15 @@ begin
   Result := StringReplace(FormatFloat('0.00', AValue), ',', '.', []);
 end;
 
-{ TMetricsetSamples }
+{ TMetricsetFormatter }
 
-procedure TMetricsetSamples.AddCustom(const AName: string;
+procedure TMetricsetFormatter.AddCustom(const AName: string;
   const AUnit: TSampleUnit; const AType: TSampleType; const AValue: Currency);
 begin
   FList.Add(Format('"%s":{"value":%s}', [FormatName(AName, AUnit, AType), FormatCurr(AValue)]));
 end;
 
-procedure TMetricsetSamples.AddHistogram(const AName: string; const AUnit: TSampleUnit; const AValues: TArray<Currency>);
+procedure TMetricsetFormatter.AddHistogram(const AName: string; const AUnit: TSampleUnit; const AValues: TArray<Currency>);
 
   function ArrayToString: string;
   var
@@ -76,28 +78,28 @@ begin
   FList.Add(Format('"%s":{"values":[%s]}', [FormatName(AName, AUnit, histogram), ArrayToString]));
 end;
 
-procedure TMetricsetSamples.AddPercentageGauge(const AName: string; const AValue: Currency);
+procedure TMetricsetFormatter.AddPercentageGauge(const AName: string; const AValue: Currency);
 begin
   // Elastic APM requires percentage values in the range [0,1], not [0,100]
   // So we divide by 100 to convert from percentage to decimal
   AddCustom(AName, msuPercent, gauge, AValue / 100);
 end;
 
-procedure TMetricsetSamples.AddBytesGauge(const AName: string; const AValue: UInt64);
+procedure TMetricsetFormatter.AddBytesGauge(const AName: string; const AValue: UInt64);
 begin
   // For byte metrics, we add directly without unit suffix as per Elastic APM spec
   // Format: "metric.name":{"value":12345}
   FList.Add(Format('"%s":{"value":%u}', [AName, AValue]));
 end;
 
-procedure TMetricsetSamples.AddDecimalGauge(const AName: string; const AValue: Currency);
+procedure TMetricsetFormatter.AddDecimalGauge(const AName: string; const AValue: Currency);
 begin
   // For metrics with complete names (e.g., already have .pct suffix), add directly without unit suffix
   // Format: "metric.name":{"value":0.50}
   FList.Add(Format('"%s":{"value":%s}', [AName, FormatCurr(AValue)]));
 end;
 
-constructor TMetricsetSamples.Create;
+constructor TMetricsetFormatter.Create;
 begin
   FList := TStringList.Create;
   FList.Delimiter := ',';
@@ -105,30 +107,35 @@ begin
   FList.StrictDelimiter := true;
 end;
 
-destructor TMetricsetSamples.Destroy;
+destructor TMetricsetFormatter.Destroy;
 begin
   FList.Free;
   inherited;
 end;
 
-function TMetricsetSamples.FormatName(const AName: string; const AUnit: TSampleUnit; const AType: TSampleType): string;
+procedure TMetricsetFormatter.Clear;
+begin
+  FList.Clear;
+end;
+
+function TMetricsetFormatter.FormatName(const AName: string; const AUnit: TSampleUnit; const AType: TSampleType): string;
 begin
   Result := Format('%s%s.%s', [IfThen(not AName.IsEmpty, AName + '.'), UnitToString(AUnit), TypeToString(AType)]);
 end;
 
-function TMetricsetSamples.ToJsonString: string;
+function TMetricsetFormatter.ToJsonString: string;
 begin
   Result := Format('"samples":{%s}', [FList.DelimitedText]);
 end;
 
-function TMetricsetSamples.TypeToString(const AType: TSampleType): string;
+function TMetricsetFormatter.TypeToString(const AType: TSampleType): string;
 const
   TYPE_STR: array [TSampleType] of string = ('gauge', 'counter', 'histogram');
 begin
   Result := TYPE_STR[AType];
 end;
 
-function TMetricsetSamples.UnitToString(const AUnit: TSampleUnit): string;
+function TMetricsetFormatter.UnitToString(const AUnit: TSampleUnit): string;
 const
   UNIT_STR: array [TSampleUnit] of string = (
     'unknown', 'percent', 'byte', 'nanos', 'micros', 'ms', 's', 'm', 'h', 'd');
