@@ -10,7 +10,7 @@ unit Apm4D.QueueSingleton;
 interface
 
 uses
-  System.SysUtils, System.Classes, System.Generics.Collections, System.SyncObjs, Vcl.ExtCtrls,
+  System.SysUtils, System.Classes, System.Generics.Collections, System.SyncObjs,
   Apm4D.SendThread, Apm4D.Settings;
 
 type

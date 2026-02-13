@@ -10,8 +10,8 @@ unit Apm4D.Interceptor;
 interface
 
 uses
-  System.Variants, Vcl.Graphics, Vcl.Controls, Vcl.Forms, Vcl.Dialogs, System.Actions, Vcl.ActnList,
-  System.Classes, Data.DB, System.Rtti, System.StrUtils;
+
+  System.Classes, System.Rtti, System.StrUtils;
 
 type
   IApm4DInterceptor = Interface

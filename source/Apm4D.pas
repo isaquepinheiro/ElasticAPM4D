@@ -10,9 +10,9 @@ unit Apm4D;
 interface
 
 uses
-  System.Rtti, System.SysUtils, System.classes, System.Generics.Collections, IdHTTP,
+  System.SysUtils, System.Generics.Collections, IdHTTP,
   Apm4D.Span, Apm4D.Transaction, Apm4D.Error, Apm4D.Share.Types, REST.Client,
-  Apm4D.DataController, Apm4D.Settings, Apm4D.Settings.Log, Apm4D.Log, Apm4D.Interceptor.Handler;
+  Apm4D.DataController, Apm4D.Settings, Apm4D.Settings.Log, Apm4D.Interceptor.Handler;
 
 type
   TTransaction = Apm4D.Transaction.TTransaction;
@@ -234,7 +234,7 @@ begin
   if not Assigned(FData) then
     Exit;
 
-  if (FData.ErrorList.Count > 0) then
+  if (FData.HasErrors) then
     FData.Transaction.SetOutcome(failure);
   try
     FData.Transaction.ToEnd(AOutcome);

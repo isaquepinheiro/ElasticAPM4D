@@ -56,9 +56,6 @@ contains
   Apm4D.Metadata in 'source\Apm4D.Metadata.pas',
   Apm4D.Metadata.Process in 'source\Apm4D.Metadata.Process.pas',
   Apm4D.Metadata.System in 'source\Apm4D.Metadata.System.pas',
-  Apm4D.Metricset.Defaults in 'source\Apm4D.Metricset.Defaults.pas',
-  Apm4D.Metricset in 'source\Apm4D.Metricset.pas',
-  Apm4D.Metricset.Samples in 'source\Apm4D.Metricset.Samples.pas',
   Apm4D in 'source\Apm4D.pas',
   Apm4D.QueueSingleton in 'source\Apm4D.QueueSingleton.pas',
   Apm4D.SendThread in 'source\Apm4D.SendThread.pas',
@@ -100,7 +97,11 @@ contains
   Apm4D.Transaction.Experience in 'source\Apm4D.Transaction.Experience.pas',
   Apm4D.Transaction in 'source\Apm4D.Transaction.pas',
   Apm4D.Transaction.Session in 'source\Apm4D.Transaction.Session.pas',
-  Apm4D.Transaction.SpanCount in 'source\Apm4D.Transaction.SpanCount.pas';
+  Apm4D.Transaction.SpanCount in 'source\Apm4D.Transaction.SpanCount.pas',
+  Apm4D.Metricset.Base in 'source\Apm4D.Metricset.Base.pas',
+  Apm4D.Metricset.Defaults in 'source\Apm4D.Metricset.Defaults.pas',
+  Apm4D.Metricset.Formatter in 'source\Apm4D.Metricset.Formatter.pas',
+  Apm4D.Metricset in 'source\Apm4D.Metricset.pas';
 
 end.
 

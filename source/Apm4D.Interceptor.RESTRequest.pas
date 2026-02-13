@@ -10,7 +10,7 @@ unit Apm4D.Interceptor.RESTRequest;
 interface
 
 uses
-  System.Classes, REST.Client, REST.HttpClient, REST.Types, Apm4D.Interceptor, System.Rtti;
+  System.Classes, REST.Client, REST.Types, Apm4D.Interceptor, System.Rtti;
 
 type
   TApm4DInterceptRESTRequest = class(TApm4DInterceptor)
@@ -151,9 +151,7 @@ begin
 end;
 
 procedure TApm4DInterceptRESTRequest.DoBeforeExecute(Sender: TCustomRESTRequest);
-var
-  SpanName: string;
-  Method: string;
+var 
   Span: TSpan;
   Host: string;
   Port: Integer;
@@ -162,21 +160,16 @@ begin
   
   // Create a transaction if none exists
   if not TApm4D.ExistsTransaction then
-  begin
-    SpanName := GetSpanName;
-    Method := RESTRequestMethodToString(FRESTRequest.Method);
-    TApm4D.StartTransactionRequest(SpanName, Method);
+  begin 
+    TApm4D.StartTransactionRequest(GetSpanName, RESTRequestMethodToString(FRESTRequest.Method));
     FTransactionCreated := True;
   end;
 
   // Always create a span for HTTP request (even if we just created a transaction)
   if not TApm4D.IsPaused then
-  begin
-    SpanName := GetSpanName;
-    Method := RESTRequestMethodToString(FRESTRequest.Method);
-    
+  begin 
     // Create span with HTTP context
-    Span := TApm4D.StartSpanRequest(SpanName, Method);
+    Span := TApm4D.StartSpanRequest(GetSpanName, RESTRequestMethodToString(FRESTRequest.Method));
     
     // Add URL information
     Span.Context.Http.url := GetURL;

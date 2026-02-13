@@ -10,7 +10,7 @@ unit Apm4D.Interceptor.DataSet;
 interface
 
 uses
-  System.Variants, Generics.Collections, Vcl.Graphics, Vcl.Controls, Vcl.Forms, Vcl.Dialogs, System.Actions, Vcl.ActnList,
+  Generics.Collections,
   System.Classes, Data.DB, Apm4D.Interceptor, System.Rtti, System.TypInfo;
 
 type

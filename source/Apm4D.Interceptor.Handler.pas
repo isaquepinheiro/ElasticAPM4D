@@ -10,8 +10,8 @@ unit Apm4D.Interceptor.Handler;
 interface
 
 uses
-  System.Variants, Generics.Collections, Vcl.Graphics, Vcl.Controls, Vcl.Forms, Vcl.Dialogs, System.Actions, Vcl.ActnList,
-  System.Classes, Data.DB, Apm4D.Interceptor;
+  Generics.Collections,
+  System.Classes, Apm4D.Interceptor;
 
 type
   IApm4DInterceptorHandler = Interface
@@ -127,9 +127,11 @@ end;
 procedure TInterceptorFinder.Build(AOwner, AControl: TComponent; AUseInheritedClasses: boolean);
 
   function MakeIt(AClasses: TArray<TApm4DInterceptorClass>): TArray<IApm4DInterceptor>;
+  var 
+    Clas: TApm4DInterceptorClass;
   begin
     Result := [];
-    for var Clas in AClasses do
+    for Clas in AClasses do
     begin
       // Only create interceptor if component is compatible
       if Clas.IsCompatible(AControl) then
@@ -139,7 +141,8 @@ procedure TInterceptorFinder.Build(AOwner, AControl: TComponent; AUseInheritedCl
 
 var
   Interceptors: TArray<TApm4DInterceptorClass>;
-  NewInterceptors: TArray<IApm4DInterceptor>;
+  NewInterceptors: TArray<IApm4DInterceptor>;    
+  Clas: TClass;
 begin
   if FClasses.TryGetValue(AControl.ClassType, Interceptors) then
   begin
@@ -150,7 +153,7 @@ begin
   end;
   if AUseInheritedClasses then
   begin
-    for var Clas in FClasses.Keys do
+    for Clas in FClasses.Keys do
     begin
       if AControl.InheritsFrom(Clas) then
       begin
@@ -181,10 +184,12 @@ end;
 
 function TApm4DInterceptorHandler.AddInterceptor(AInterceptor: TApm4DInterceptorClass;
   AClasses: TArray<TClass>): IApm4DInterceptorHandler;
+var  
+  Clas: TClass;  
 begin
   if Assigned(FFinder) then
   begin
-    for var Clas in AClasses do
+    for Clas in AClasses do
       FFinder.Add(Clas, AInterceptor);
   end;
   result := Self;
