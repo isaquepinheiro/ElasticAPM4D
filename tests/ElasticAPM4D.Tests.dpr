@@ -18,6 +18,7 @@ uses
   Test.Transaction in 'Transaction\Test.Transaction.pas',
   Test.Span in 'Span\Test.Span.pas',
   Test.Error in 'Core\Test.Error.pas',
+  Test.FacadeIntegration in 'Core\Test.FacadeIntegration.pas',
   Test.JSONOutput in 'Serialization\Test.JSONOutput.pas',
   Test.InternalQueue in 'Buffer\Test.InternalQueue.pas',
   Test.ThreadSafety in 'Concurrency\Test.ThreadSafety.pas',

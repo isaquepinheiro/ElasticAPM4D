@@ -23,8 +23,15 @@ type
     procedure TestSerializeError;
     [Test]
     procedure TestSerializeEmptyObject;
-  end;
 
+  [Test]
+  procedure TestTransactionContainsRequiredElasticFields;
+
+  [Test]
+  procedure TestSpanContainsRequiredElasticFields;
+
+  [Test]
+  procedure TestErrorContainsRequiredElasticFields;
 implementation
 
 { TTestSerializer }
@@ -139,6 +146,119 @@ begin
     Assert.AreEqual('{"empty": {}}', LJsonString);
   finally
     LObj.Free;
+  end;
+end;
+
+procedure TTestSerializer.TestTransactionContainsRequiredElasticFields;
+var
+  LTransaction: TTransaction;
+  LJsonString: string;
+  LRoot: TJSONObject;
+  LTx: TJSONObject;
+begin
+  LTransaction := TTransaction.Create;
+  try
+    LTransaction.Start('RequiredFieldsTx', 'test');
+    LTransaction.ToEnd;
+    LJsonString := LTransaction.ToJsonString;
+
+    LRoot := TJSONObject.ParseJSONValue(LJsonString) as TJSONObject;
+    try
+      LTx := LRoot.GetValue<TJSONObject>('transaction');
+      Assert.IsNotNull(LTx, 'Root must have a "transaction" key');
+      Assert.IsNotEmpty(LTx.GetValue<string>('id'),
+        'Transaction JSON must contain non-empty "id"');
+      Assert.IsNotEmpty(LTx.GetValue<string>('trace_id'),
+        'Transaction JSON must contain non-empty "trace_id"');
+      Assert.IsTrue(LTx.GetValue<Int64>('timestamp') > 0,
+        'Transaction JSON must contain a positive "timestamp"');
+      Assert.IsTrue(LTx.GetValue<Int64>('duration') >= 0,
+        'Transaction JSON must contain a non-negative "duration"');
+      Assert.IsNotEmpty(LTx.GetValue<string>('name'),
+        'Transaction JSON must contain non-empty "name"');
+      Assert.IsNotEmpty(LTx.GetValue<string>('type'),
+        'Transaction JSON must contain non-empty "type"');
+    finally
+      LRoot.Free;
+    end;
+  finally
+    LTransaction.Free;
+  end;
+end;
+
+procedure TTestSerializer.TestSpanContainsRequiredElasticFields;
+var
+  LSpan: TSpan;
+  LJsonString: string;
+  LRoot: TJSONObject;
+  LSpanObj: TJSONObject;
+begin
+  LSpan := TSpan.Create('trace_aaa', 'trans_bbb', 'parent_ccc');
+  try
+    LSpan.Start('RequiredFieldsSpan', 'db');
+    LSpan.ToEnd;
+    LJsonString := LSpan.ToJsonString;
+
+    LRoot := TJSONObject.ParseJSONValue(LJsonString) as TJSONObject;
+    try
+      LSpanObj := LRoot.GetValue<TJSONObject>('span');
+      Assert.IsNotNull(LSpanObj, 'Root must have a "span" key');
+      Assert.IsNotEmpty(LSpanObj.GetValue<string>('id'),
+        'Span JSON must contain non-empty "id"');
+      Assert.IsNotEmpty(LSpanObj.GetValue<string>('trace_id'),
+        'Span JSON must contain non-empty "trace_id"');
+      Assert.IsNotEmpty(LSpanObj.GetValue<string>('transaction_id'),
+        'Span JSON must contain non-empty "transaction_id"');
+      Assert.IsNotEmpty(LSpanObj.GetValue<string>('parent_id'),
+        'Span JSON must contain non-empty "parent_id"');
+      Assert.IsTrue(LSpanObj.GetValue<Int64>('timestamp') > 0,
+        'Span JSON must contain a positive "timestamp"');
+      Assert.IsTrue(LSpanObj.GetValue<Int64>('duration') >= 0,
+        'Span JSON must contain a non-negative "duration"');
+    finally
+      LRoot.Free;
+    end;
+  finally
+    LSpan.Free;
+  end;
+end;
+
+procedure TTestSerializer.TestErrorContainsRequiredElasticFields;
+var
+  LError: TError;
+  LJsonString: string;
+  LRoot: TJSONObject;
+  LErrorObj: TJSONObject;
+  LExceptionObj: TJSONObject;
+begin
+  LError := TError.Create('trace_x', 'trans_y', 'parent_z');
+  try
+    LError.Exception.&Message := 'Required field test';
+    LError.Exception.&Type := 'ETest';
+    LJsonString := LError.ToJsonString;
+
+    LRoot := TJSONObject.ParseJSONValue(LJsonString) as TJSONObject;
+    try
+      LErrorObj := LRoot.GetValue<TJSONObject>('error');
+      Assert.IsNotNull(LErrorObj, 'Root must have an "error" key');
+      Assert.IsNotEmpty(LErrorObj.GetValue<string>('id'),
+        'Error JSON must contain non-empty "id"');
+      Assert.IsNotEmpty(LErrorObj.GetValue<string>('trace_id'),
+        'Error JSON must contain non-empty "trace_id"');
+      Assert.IsNotEmpty(LErrorObj.GetValue<string>('transaction_id'),
+        'Error JSON must contain non-empty "transaction_id"');
+      Assert.IsTrue(LErrorObj.GetValue<Int64>('timestamp') > 0,
+        'Error JSON must contain a positive "timestamp"');
+      LExceptionObj := LErrorObj.GetValue<TJSONObject>('exception');
+      Assert.IsNotNull(LExceptionObj,
+        'Error JSON must contain an "exception" object');
+      Assert.IsNotEmpty(LExceptionObj.GetValue<string>('message'),
+        'Exception object must contain non-empty "message"');
+    finally
+      LRoot.Free;
+    end;
+  finally
+    LError.Free;
   end;
 end;
 

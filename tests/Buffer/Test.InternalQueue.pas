@@ -3,7 +3,7 @@ unit Test.InternalQueue;
 interface
 
 uses
-  DUnitX.TestFramework, System.SysUtils, System.Classes, 
+  DUnitX.TestFramework, System.SysUtils, System.Classes,
   Apm4D.QueueSingleton, Apm4D.Settings;
 
 type
@@ -16,9 +16,13 @@ type
     procedure TearDown;
 
     [Test]
-    procedure TestPushToQueue;
+    procedure Should_Not_Raise_When_Pushing_Single_Item;
+
     [Test]
-    procedure TestQueueLimit;
+    procedure Should_Silently_Discard_When_Inactive;
+
+    [Test]
+    procedure Should_Not_Raise_When_Pushing_Beyond_Limit;
   end;
 
 implementation
@@ -28,9 +32,8 @@ implementation
 procedure TTestQueue.Setup;
 begin
   TApm4DSettings.ReleaseInstance;
-  // Inicializa o ambiente para a fila singleton funcionar
   TApm4DSettings.Application.Name := 'TestApp';
-  TApm4DSettings.Elastic.Url := 'http://127.0.0.1:8200/intake/v2/events';
+  TApm4DSettings.Elastic.Url := 'http://127.0.0.1:8200';
   TApm4DSettings.Activate;
 end;
 
@@ -40,23 +43,46 @@ begin
   TApm4DSettings.ReleaseInstance;
 end;
 
-procedure TTestQueue.TestPushToQueue;
+procedure TTestQueue.Should_Not_Raise_When_Pushing_Single_Item;
 begin
-  // Empilha um item básico
-  TQueueSingleton.StackUp('{"test": 1}', 'traceparent=123');
-  Assert.Pass('Push to queue should not raise exceptions');
+  Assert.WillNotRaise(
+    procedure
+    begin
+      TQueueSingleton.StackUp('{"test": 1}', 'traceparent=123');
+    end,
+    Exception,
+    'Pushing a single item to an active queue must not raise'
+  );
 end;
 
-procedure TTestQueue.TestQueueLimit;
+procedure TTestQueue.Should_Silently_Discard_When_Inactive;
+begin
+  TApm4DSettings.Deactivate;
+  Assert.WillNotRaise(
+    procedure
+    begin
+      TQueueSingleton.StackUp('{"should_be_ignored": true}', 'traceparent=000');
+    end,
+    Exception,
+    'StackUp while inactive must silently discard the item without raising'
+  );
+end;
+
+procedure TTestQueue.Should_Not_Raise_When_Pushing_Beyond_Limit;
 var
   LIndex: Integer;
+  LLimit: Integer;
 begin
-  // Empilha além do limite (MaxJsonPerThread, que é 50 por padrão ou similar)
-  for LIndex := 1 to (TApm4DSettings.Elastic.MaxJsonPerThread + 10) do
-  begin
-    TQueueSingleton.StackUp('{"test": ' + IntToStr(LIndex) + '}', 'traceparent=123');
-  end;
-  Assert.Pass('Push beyond limit should be handled safely');
+  LLimit := TApm4DSettings.Elastic.MaxJsonPerThread;
+  Assert.WillNotRaise(
+    procedure
+    begin
+      for LIndex := 1 to LLimit + 10 do
+        TQueueSingleton.StackUp('{"seq": ' + IntToStr(LIndex) + '}', 'traceparent=seq');
+    end,
+    Exception,
+    'Pushing beyond MaxJsonPerThread must not raise an exception'
+  );
 end;
 
 initialization
