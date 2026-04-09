@@ -269,6 +269,9 @@ end;
 
 class function TApm4D.StartSpan(const AName, AType: string): TSpan;
 begin
+  if not Assigned(FData) then
+    raise ETransactionNotFound.Create('Apm4D -> Cannot start span without an active transaction');
+
   Result := FData.StartSpan(AName, AType);
 end;
 

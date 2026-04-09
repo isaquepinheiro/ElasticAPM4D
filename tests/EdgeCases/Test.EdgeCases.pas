@@ -32,6 +32,12 @@ type
     procedure Should_Raise_When_Starting_Span_Without_Transaction;
 
     [Test]
+    procedure Should_Raise_When_Starting_SpanDb_Without_Transaction;
+
+    [Test]
+    procedure Should_Raise_When_Starting_SpanRequest_Without_Transaction;
+
+    [Test]
     procedure Should_Return_Header_Only_When_Transaction_Exists;
   end;
 
@@ -113,8 +119,32 @@ begin
     begin
       TApm4D.StartSpan('span-without-tx', 'method');
     end,
-    EAccessViolation,
-    'Starting a span without an open transaction currently raises an access violation and must not silently succeed'
+    ETransactionNotFound,
+    'Starting a span without an open transaction raises a domain exception'
+  );
+end;
+
+procedure TTestEdgeCases.Should_Raise_When_Starting_SpanDb_Without_Transaction;
+begin
+  Assert.WillRaise(
+    procedure
+    begin
+      TApm4D.StartSpanDb('db-span-without-tx', 'mysql');
+    end,
+    ETransactionNotFound,
+    'Starting a database span without an open transaction raises a domain exception'
+  );
+end;
+
+procedure TTestEdgeCases.Should_Raise_When_Starting_SpanRequest_Without_Transaction;
+begin
+  Assert.WillRaise(
+    procedure
+    begin
+      TApm4D.StartSpanRequest('/api/users', 'GET');
+    end,
+    ETransactionNotFound,
+    'Starting a request span without an open transaction raises a domain exception'
   );
 end;
 
