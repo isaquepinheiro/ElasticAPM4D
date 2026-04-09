@@ -66,12 +66,10 @@ __recovery/
 *.stat
 source/3rd/
 
+# DUnitX — saída de runner local/CI (evita poluir git status / diffs)
+dunitx-results.xml
+
 tests/Win32/
 tests/Win64/
 
-.agents/
-.claude/
-.archive/
-.codex/
-knowledge/
 Suite-testes.*
