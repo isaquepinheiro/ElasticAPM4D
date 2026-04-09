@@ -34,16 +34,20 @@ type
 implementation
 
 uses
-  System.SysUtils;
+  System.SysUtils,
+  Apm4D.Settings;
 
 { TTestContext }
 
 procedure TTestContext.Setup;
 begin
+  TApm4DSettings.ReleaseInstance;
 end;
 
 procedure TTestContext.TearDown;
 begin
+  TApm4DSettings.Deactivate;
+  TApm4DSettings.ReleaseInstance;
 end;
 
 procedure TTestContext.Should_Initialize_User_And_Service_On_Create;

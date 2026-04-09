@@ -3,12 +3,18 @@ unit Test.JSONOutput;
 interface
 
 uses
-  DUnitX.TestFramework, System.SysUtils, System.JSON, Apm4D.Serializer, Apm4D.Transaction, Apm4D.Span, Apm4D.Error;
+  DUnitX.TestFramework, System.SysUtils, System.JSON, Apm4D.Serializer, Apm4D.Transaction, Apm4D.Span, Apm4D.Error,
+  Apm4D.Settings;
 
 type
   [TestFixture]
   TTestSerializer = class
   public
+    [Setup]
+    procedure Setup;
+    [TearDown]
+    procedure TearDown;
+
     [Test]
     procedure TestSerializeTransaction;
     [Test]
@@ -22,6 +28,17 @@ type
 implementation
 
 { TTestSerializer }
+
+procedure TTestSerializer.Setup;
+begin
+  TApm4DSettings.ReleaseInstance;
+end;
+
+procedure TTestSerializer.TearDown;
+begin
+  TApm4DSettings.Deactivate;
+  TApm4DSettings.ReleaseInstance;
+end;
 
 procedure TTestSerializer.TestSerializeTransaction;
 var

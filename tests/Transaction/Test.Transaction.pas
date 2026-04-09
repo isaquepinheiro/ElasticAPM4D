@@ -3,7 +3,8 @@ unit Test.Transaction;
 interface
 
 uses
-  DUnitX.TestFramework, System.SysUtils, Apm4D.Transaction, Apm4D.Share.Types;
+  DUnitX.TestFramework, System.SysUtils, Apm4D.Transaction, Apm4D.Share.Types,
+  Apm4D.Settings;
 
 type
   [TestFixture]
@@ -36,10 +37,13 @@ implementation
 
 procedure TTestTransaction.Setup;
 begin
+  TApm4DSettings.ReleaseInstance;
 end;
 
 procedure TTestTransaction.TearDown;
 begin
+  TApm4DSettings.Deactivate;
+  TApm4DSettings.ReleaseInstance;
 end;
 
 procedure TTestTransaction.Should_Create_With_Valid_Ids;

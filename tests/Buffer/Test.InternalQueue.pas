@@ -27,6 +27,7 @@ implementation
 
 procedure TTestQueue.Setup;
 begin
+  TApm4DSettings.ReleaseInstance;
   // Inicializa o ambiente para a fila singleton funcionar
   TApm4DSettings.Application.Name := 'TestApp';
   TApm4DSettings.Elastic.Url := 'http://127.0.0.1:8200/intake/v2/events';
@@ -36,6 +37,7 @@ end;
 procedure TTestQueue.TearDown;
 begin
   TApm4DSettings.Deactivate;
+  TApm4DSettings.ReleaseInstance;
 end;
 
 procedure TTestQueue.TestPushToQueue;
@@ -47,12 +49,12 @@ end;
 
 procedure TTestQueue.TestQueueLimit;
 var
-  I: Integer;
+  LIndex: Integer;
 begin
   // Empilha além do limite (MaxJsonPerThread, que é 50 por padrão ou similar)
-  for I := 1 to (TApm4DSettings.Elastic.MaxJsonPerThread + 10) do
+  for LIndex := 1 to (TApm4DSettings.Elastic.MaxJsonPerThread + 10) do
   begin
-    TQueueSingleton.StackUp('{"test": ' + IntToStr(I) + '}', 'traceparent=123');
+    TQueueSingleton.StackUp('{"test": ' + IntToStr(LIndex) + '}', 'traceparent=123');
   end;
   Assert.Pass('Push beyond limit should be handled safely');
 end;

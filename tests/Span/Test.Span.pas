@@ -3,7 +3,7 @@ unit Test.Span;
 interface
 
 uses
-  DUnitX.TestFramework, System.SysUtils, Apm4D.Span;
+  DUnitX.TestFramework, System.SysUtils, Apm4D.Span, Apm4D.Settings;
 
 type
   [TestFixture]
@@ -36,10 +36,13 @@ implementation
 
 procedure TTestSpan.Setup;
 begin
+  TApm4DSettings.ReleaseInstance;
 end;
 
 procedure TTestSpan.TearDown;
 begin
+  TApm4DSettings.Deactivate;
+  TApm4DSettings.ReleaseInstance;
 end;
 
 procedure TTestSpan.Should_Create_With_Hierarchy_Ids;

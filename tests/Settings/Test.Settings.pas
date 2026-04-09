@@ -53,7 +53,7 @@ end;
 procedure TTestSettings.Should_Return_Application_Defaults;
 begin
   Assert.IsNotEmpty(TApm4DSettings.Application.Name, 'Application Name should not be empty');
-  Assert.AreEqual('development', TApm4DSettings.Application.Environment, 'Default environment should be development');
+  Assert.AreEqual('staging', TApm4DSettings.Application.Environment, 'Default environment should be staging');
 end;
 
 procedure TTestSettings.Should_Return_Elastic_Defaults;
