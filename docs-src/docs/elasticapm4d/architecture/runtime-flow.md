@@ -13,7 +13,7 @@ title: Runtime Flow
 
 ## Error points
 
-- **No active transaction:** calling some span paths without a transaction can fail in current behavior.
+- **No active transaction:** StartSpan, StartSpanDb, and StartSpanRequest require an open transaction and raise ETransactionNotFound when none exists.
 - **Global state leakage:** singleton settings or queue state can leak between tests without teardown.
 - **Transport delivery issues:** endpoint, token, or network problems may prevent event upload.
 - **Windows-only interceptors:** interceptor behavior differs on non-Windows targets.

@@ -5,9 +5,9 @@ title: Common Errors
 
 ## Span started without active transaction
 
-- **Symptom:** runtime error when StartSpan is called with no active transaction.
-- **Likely cause:** current framework behavior assumes transaction context before span creation.
-- **Action:** always start a transaction first and close spans in LIFO order.
+- **Symptom:** ETransactionNotFound is raised when StartSpan, StartSpanDb, or StartSpanRequest is called without an active transaction.
+- **Likely cause:** span APIs enforce the parent transaction precondition.
+- **Action:** always call StartTransaction before starting spans and close spans in LIFO order.
 
 ## Events from previous tests affect current test
 

@@ -10,6 +10,8 @@ title: API - Reference
 | TApm4D.StartTransaction(name, kind) | method | Starts a top-level operation context. |
 | TApm4D.StartTransaction(name, kind, traceId) | method | Starts a transaction continuing an incoming trace. |
 | TApm4D.StartSpan(name, kind) | method | Creates a nested operation under current transaction/span. |
+| TApm4D.StartSpanDb(name, dbType) | method | Creates a database span under the active transaction/span. |
+| TApm4D.StartSpanRequest(resource, method) | method | Creates an external/request span under the active transaction/span. |
 | TApm4D.EndSpan | method | Ends current active span. |
 | TApm4D.EndTransaction(outcome) | method | Closes transaction and sets outcome. |
 | TApm4D.AddError(exception) | method | Captures exception details and links to current context. |
@@ -31,6 +33,8 @@ title: API - Reference
 
 - Activate settings before emitting telemetry.
 - Keep transaction/span lifecycle balanced (start and end pairs).
+- Start a transaction before calling StartSpan, StartSpanDb, or StartSpanRequest.
+- Calling span-start APIs without an active transaction raises ETransactionNotFound.
 - Use ReleaseInstance in teardown for isolated tests.
 - Do not assume interceptor availability outside Windows builds.
 - Use documented defaults when explicit settings are not provided.
