@@ -2,7 +2,7 @@
 
 > Agente de Application Performance Monitoring nativo para Delphi integrado ao Elastic APM.
 
-**Última atualização:** 2026-04-08
+**Última atualização:** 2026-04-09
 
 ---
 
@@ -65,3 +65,17 @@ Cada sprint documentado pelo `/sprint` é registrado aqui.
 O `/sprint` tica o item correspondente ao fechar a rodada.
 
 - [ ] Sprint 1 — Fase 1 (Configurações e Contextos) — 2026-04-08
+
+---
+
+## Backlog sincronizado
+
+Backlog operacional sincronizado com este roadmap:
+
+- `.archive/2026-04-09_backlog-sincronizado-roadmap.md`
+
+Prioridade imediata para continuidade da trilha atual de testes:
+
+1. Fase 4 (Avancado com Mocks): abstracao HTTP e testes 2xx/4xx/5xx/timeout/conexao.
+2. Nao-regressao: blindagem da captura de excecoes Delphi com stacktrace.
+3. Atualizar os checkboxes das fases apos fechamento da rodada de testes.

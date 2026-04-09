@@ -73,3 +73,6 @@ tests/Win32/
 tests/Win64/
 
 Suite-testes.*
+
+# Build system — temporary artifacts (agents' compilation workflow)
+.build/
