@@ -66,6 +66,12 @@ __recovery/
 *.stat
 source/3rd/
 
-.claude/
 tests/Win32/
 tests/Win64/
+
+.agents/
+.claude/
+.archive/
+.codex/
+knowledge/
+Suite-testes.*

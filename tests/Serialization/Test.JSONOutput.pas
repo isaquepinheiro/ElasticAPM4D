@@ -1,4 +1,4 @@
-unit Test.Serializer;
+unit Test.JSONOutput;
 
 interface
 

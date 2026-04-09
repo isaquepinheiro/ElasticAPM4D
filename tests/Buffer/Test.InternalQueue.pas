@@ -1,4 +1,4 @@
-unit Test.Queue;
+unit Test.InternalQueue;
 
 interface
 

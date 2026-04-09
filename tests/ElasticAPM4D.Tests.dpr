@@ -15,8 +15,11 @@ uses
   Test.Context in 'Settings\Test.Context.pas',
   Test.Context.Db in 'Settings\Test.Context.Db.pas',
   Test.Activate in 'Settings\Test.Activate.pas',
-  Test.Serializer in 'Core\Test.Serializer.pas',
-  Test.Queue in 'Core\Test.Queue.pas';
+  Test.Transaction in 'Transaction\Test.Transaction.pas',
+  Test.Span in 'Span\Test.Span.pas',
+  Test.Error in 'Core\Test.Error.pas',
+  Test.JSONOutput in 'Serialization\Test.JSONOutput.pas',
+  Test.InternalQueue in 'Buffer\Test.InternalQueue.pas';
 
 var
   runner : ITestRunner;
