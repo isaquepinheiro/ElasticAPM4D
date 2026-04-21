@@ -1,4 +1,4 @@
-﻿package Apm4D;
+package Apm4D;
 
 {$R *.res}
 {$IFDEF IMPLICITBUILDING This IFDEF should not be used by users}
@@ -24,7 +24,6 @@
 {$MINENUMSIZE 1}
 {$IMAGEBASE $400000}
 {$DEFINE DEBUG}
-{$DEFINE Jcl}
 {$ENDIF IMPLICITBUILDING}
 {$RUNONLY}
 {$IMPLICITBUILD ON}
@@ -85,6 +84,8 @@ contains
   Apm4D.Share.Stacktrace in 'source\Apm4D.Share.Stacktrace.pas',
   Apm4D.Share.TimestampEpoch in 'source\Apm4D.Share.TimestampEpoch.pas',
   Apm4D.Share.Types in 'source\Apm4D.Share.Types.pas',
+  Apm4D.HttpClient.Indy in 'source\Apm4D.HttpClient.Indy.pas',
+  Apm4D.HttpClient.Mock in 'source\Apm4D.HttpClient.Mock.pas',
   Apm4D.Share.User in 'source\Apm4D.Share.User.pas',
   Apm4D.Share.Uuid in 'source\Apm4D.Share.Uuid.pas',
   Apm4D.Span.Context.Db in 'source\Apm4D.Span.Context.Db.pas',

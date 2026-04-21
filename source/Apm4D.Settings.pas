@@ -1,4 +1,4 @@
-﻿{ ******************************************************* }
+{ ******************************************************* }
 { }
 { Delphi Elastic Apm Agent }
 { }
@@ -24,7 +24,8 @@ uses
   Apm4D.Settings.User,
   Apm4D.Settings.Application,
   Apm4D.Settings.Elastic,
-  Apm4D.Settings.Log;
+  Apm4D.Settings.Log,
+  Apm4D.Share.Types;
 
 type
 {$IFDEF MSWINDOWS}
@@ -51,6 +52,7 @@ type
     class var FInterceptors: TDictionary<TApm4DInterceptorClass, TArray<TClass>>;
 {$ENDIF}
     class var FMetricsets: TList<TApm4DMetricsetClass>;
+    class var FHttpClientFactory: TApm4DHttpClientFactory;
   public
     class function Database: TDatabaseSettings; static;
     class function User: TUserSettings; static;
@@ -84,13 +86,16 @@ type
     /// Clear all registered metricsets.
     /// </summary>
     class procedure ClearMetricsets;
+
+    class procedure SetHttpClientFactory(AFactory: TApm4DHttpClientFactory);
+    class function CreateHttpClient: IApm4DHttpClient;
   end;
 
 implementation
 
 Uses
 {$IFDEF MSWINDOWS} Vcl.Forms, {$ENDIF}
-  System.SysUtils, System.DateUtils, System.Variants;
+  System.SysUtils, System.DateUtils, System.Variants, Apm4D.HttpClient.Indy;
 
 { TApm4DSettings }
 
@@ -300,9 +305,32 @@ begin
   end;
 end;
 
+class procedure TApm4DSettings.SetHttpClientFactory(AFactory: TApm4DHttpClientFactory);
+begin
+  FLock.Enter;
+  try
+    FHttpClientFactory := AFactory;
+  finally
+    FLock.Leave;
+  end;
+end;
+
+class function TApm4DSettings.CreateHttpClient: IApm4DHttpClient;
+begin
+  FLock.Enter;
+  try
+    Result := nil;
+    if Assigned(FHttpClientFactory) then
+      Result := FHttpClientFactory();
+  finally
+    FLock.Leave;
+  end;
+end;
+
 initialization
 
 TApm4DSettings.FLock := TCriticalSection.Create;
+TApm4DSettings.FHttpClientFactory := TApm4DIdHttpClientFactory;
 
 finalization
 

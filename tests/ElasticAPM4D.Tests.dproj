@@ -129,6 +129,7 @@
         <DCCReference Include="Core\Apm4D.Tests.Stacktrace.pas"/>
         <DCCReference Include="Serialization\Test.JSONOutput.pas"/>
         <DCCReference Include="Buffer\Test.InternalQueue.pas"/>
+        <DCCReference Include="Core\Apm4D.SendThread.Test.pas"/>
         <BuildConfiguration Include="Base">
             <Key>Base</Key>
         </BuildConfiguration>
