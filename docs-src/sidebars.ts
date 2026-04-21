@@ -39,12 +39,18 @@ const sidebars: SidebarsConfig = {
         },
         {
           type: 'category',
+          label: 'Guides',
+          items: ['elasticapm4d/guides/stacktrace-providers'],
+        },
+        {
+          type: 'category',
           label: 'Tests & Support',
           items: [
             'elasticapm4d/tests/overview',
             'elasticapm4d/troubleshooting/common-errors',
           ],
         },
+
       ],
     },
   ],

@@ -17,6 +17,9 @@ title: API - Reference
 | TApm4D.AddError(exception) | method | Captures exception details and links to current context. |
 | TApm4DSettings.Activate / Deactivate | method | Enables or disables runtime capture and delivery. |
 | TApm4DSettings.Elastic.* | settings | Configures URL, auth token, batch interval, and queue limits. |
+| TApm4DSettings.StacktraceProvider | setting | Selects the provider (Automatic, MadExcept, EurekaLog, JCL, None). |
+| TApm4DSettings.SetHttpClientFactory | method | Injects a custom HTTP client implementation. |
+
 
 ## Main outputs
 
