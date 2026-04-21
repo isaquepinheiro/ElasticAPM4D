@@ -126,6 +126,7 @@
         <DCCReference Include="Transaction\Test.Transaction.pas"/>
         <DCCReference Include="Span\Test.Span.pas"/>
         <DCCReference Include="Core\Test.Error.pas"/>
+        <DCCReference Include="Core\Apm4D.Tests.Stacktrace.pas"/>
         <DCCReference Include="Serialization\Test.JSONOutput.pas"/>
         <DCCReference Include="Buffer\Test.InternalQueue.pas"/>
         <BuildConfiguration Include="Base">

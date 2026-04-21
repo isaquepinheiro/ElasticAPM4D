@@ -70,12 +70,13 @@ end;
 
 procedure TTestQueue.Should_Not_Raise_When_Pushing_Beyond_Limit;
 var
-  LIndex: Integer;
   LLimit: Integer;
 begin
   LLimit := TApm4DSettings.Elastic.MaxJsonPerThread;
   Assert.WillNotRaise(
     procedure
+    var
+      LIndex: Integer;
     begin
       for LIndex := 1 to LLimit + 10 do
         TQueueSingleton.StackUp('{"seq": ' + IntToStr(LIndex) + '}', 'traceparent=seq');

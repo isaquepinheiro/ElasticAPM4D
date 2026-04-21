@@ -22,7 +22,8 @@ uses
   Test.JSONOutput in 'Serialization\Test.JSONOutput.pas',
   Test.InternalQueue in 'Buffer\Test.InternalQueue.pas',
   Test.ThreadSafety in 'Concurrency\Test.ThreadSafety.pas',
-  Test.EdgeCases in 'EdgeCases\Test.EdgeCases.pas';
+  Test.EdgeCases in 'EdgeCases\Test.EdgeCases.pas',
+  Apm4D.Tests.Stacktrace in 'Core\Apm4D.Tests.Stacktrace.pas';
 
 var
   runner : ITestRunner;

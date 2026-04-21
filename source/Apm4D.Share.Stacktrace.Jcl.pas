@@ -1,4 +1,4 @@
-﻿{*******************************************************}
+{*******************************************************}
 {                                                       }
 {             Delphi Elastic Apm Agent                  }
 {                                                       }
@@ -12,19 +12,21 @@ interface
 uses 
   System.Classes,
   Apm4D.Share.Stacktrace;
-
+  
 type
   TStacktraceJCL = class(TStackTracer)
   private const
     MAX_FRAMES = 15; // Limit stacktrace to 15 most relevant frames
   private
     FStackTrace: TArray<TStacktrace>; 
+  protected
     function ExtractValue(const AStr, ARegEX: string): string;
     function GetLine(const AStr: string): Integer;
     function GetUnitName(const AStr: string): string;
     function GetClassName(const AStr: string): string;
+    function GetFunctionName(const AStr: string): string;
     function GetContextLine(const AStr: string): string;
-    function GetStackList: TStringList;
+    function GetStackList: TStringList; virtual;
     function IsValidStacktrace(const AStr: string): Boolean;
     function IsIgnoreUnit(const AUnitName: string): Boolean;
   public
@@ -47,59 +49,70 @@ uses
 
 constructor TStacktraceJCL.Create;
 var
-  StackList: TStringList;
-  Stacktrace: TStacktrace;
-  Line: Integer;
-  JclStackTrace: TStacktraceJCL;
-  FrameCount: Integer;
+  LStackList: TStringList;
+  LStacktrace: TStacktrace;
+  LLine: Integer;
+  LFrameCount: Integer;
 begin
   FStackTrace := [];
-  FrameCount := 0;
-  JclStackTrace := TStacktraceJCL.Create;
-  StackList := JclStackTrace.GetStackList;
+  LFrameCount := 0;
+  LStackList := GetStackList;
   try
-    for Line := 0 to Pred(StackList.Count) do
+    for LLine := 0 to Pred(LStackList.Count) do
     begin
-      if FrameCount >= MAX_FRAMES then
-        Break; // Stop after collecting enough frames
-        
-      if not JclStackTrace.IsValidStacktrace(StackList.Strings[Line]) then
+      if LFrameCount >= MAX_FRAMES then
+        Break;
+
+      if not IsValidStacktrace(LStackList.Strings[LLine]) then
         Continue;
 
-      Stacktrace := TStacktrace.Create;
-      Stacktrace.lineno := JclStackTrace.GetLine(StackList.Strings[Line]);
-      Stacktrace.module := JclStackTrace.GetClassName(StackList.Strings[Line]);
-      Stacktrace.filename := JclStackTrace.GetUnitName(StackList.Strings[Line]);
-      Stacktrace.Context_line := JclStackTrace.GetContextLine(StackList.Strings[Line]);
+      LStacktrace := TStacktrace.Create;
+      try
+        LStacktrace.lineno := GetLine(LStackList.Strings[LLine]);
+        LStacktrace.module := GetClassName(LStackList.Strings[LLine]);
+        LStacktrace.filename := GetUnitName(LStackList.Strings[LLine]);
+        LStacktrace.&function := GetFunctionName(LStackList.Strings[LLine]);
+        LStacktrace.Context_line := GetContextLine(LStackList.Strings[LLine]);
 
-      if JclStackTrace.IsIgnoreUnit(Stacktrace.filename) then
-      begin
-        Stacktrace.Free;
-        Continue;
+        if IsIgnoreUnit(LStacktrace.filename) then
+        begin
+          LStacktrace.Free;
+          Continue;
+        end;
+
+        FStackTrace := FStackTrace + [LStacktrace];
+        Inc(LFrameCount);
+      except
+        LStacktrace.Free;
       end;
-      
-      FStackTrace := FStackTrace + [Stacktrace];
-      Inc(FrameCount);
     end;
   finally
-    StackList.Free;
-    JclStackTrace.Free;
-  end;  
+    LStackList.Free;
+  end;
 end;
 
 function TStacktraceJCL.IsValidStacktrace(const AStr: string): Boolean;
 begin
-  Result := not ExtractValue(AStr, '(?<=\])(.*?)(?=\+)').IsEmpty;
+  Result := (AStr.Contains('[') and AStr.Contains(']')) and
+            (not ExtractValue(AStr, '(?<=\])(.*?)(?=[(\+])').Trim.IsEmpty);
 end;
 
 function TStacktraceJCL.ExtractValue(const AStr, ARegEX: string): string;
 var
   LMath: TMatch;
 begin
-  LMath := TRegEx.Match(AStr, ARegEX);
-  if LMath.Success and (LMath.Groups.Count > 0) then
-    Exit(LMath.Groups.Item[Pred(LMath.Groups.Count)].Value);
-
+  try
+    LMath := TRegEx.Match(AStr, ARegEX);
+    if LMath.Success then
+    begin
+      if LMath.Groups.Count > 1 then
+        Exit(LMath.Groups.Item[1].Value)
+      else
+        Exit(LMath.Value);
+    end;
+  except
+    // Silent fail for regex
+  end;
   Result := '';
 end;
 
@@ -108,23 +121,38 @@ begin
   Result := ExtractValue(AStr, '(\T[a-zA-Z0-9_]+)');
 end;
 
+function TStacktraceJCL.GetFunctionName(const AStr: string): string;
+begin
+  Result := ExtractValue(AStr, '(?<=\])(.*?)(?=[(\+])').Trim;
+  if Result.IsEmpty then
+    Result := ExtractValue(AStr, '(?<=\])(.*)').Trim;
+end;
+
 function TStacktraceJCL.GetContextLine(const AStr: string): string;
 begin
   Result := ExtractValue(AStr, '(?<=\])(.*?)(?=\+)');
-  if Pos('(', Result) > 0 then
+  if Result.IsEmpty then
+    Result := ExtractValue(AStr, '(?<=\])(.*)');
+    
+  if (not Result.IsEmpty) and (Pos('(', Result) > 0) and (not Result.Contains(')')) then
     Result := Result + ')';
 end;
 
 function TStacktraceJCL.GetCulprit: string;
 var
-  Stack: TStacktrace;
-  List: TArray<string>;
+  LStack: TStacktrace;
 begin
   if Length(FStackTrace) = 0 then
-    Exit('');
-  Stack := FStackTrace[0];
-  List := Stack.Context_line.Remove(Pos('(', Stack.Context_line) - 1).Split(['.']);
-  Result := List[Length(List) - 1];
+    Exit('unknown');
+
+  LStack := FStackTrace[0];
+  if not LStack.&function.IsEmpty then
+    Exit(LStack.&function);
+
+  if not LStack.module.IsEmpty then
+    Exit(LStack.module);
+
+  Result := LStack.filename;
 end;
 
 function TStacktraceJCL.GetLine(const AStr: string): Integer;
@@ -137,18 +165,18 @@ function TStacktraceJCL.GetStackList: TStringList;
 {$IFDEF MSWINDOWS}
 {$IFDEF jcl}
 var
-  StackInfo: TJclStackInfoList;
+  LStackInfo: TJclStackInfoList;
 {$ENDIF}
 {$ENDIF}
 begin
   Result := TStringList.Create;
 {$IFDEF MSWINDOWS}
 {$IFDEF jcl}
-  StackInfo := JclCreateStackList(True, 0, nil);
+  LStackInfo := JclCreateStackList(True, 0, nil);
   try
-    StackInfo.AddToStrings(Result, True, True, True, True);
+    LStackInfo.AddToStrings(Result, True, True, True, True);
   finally
-    StackInfo.Free;
+    LStackInfo.Free;
   end;
 {$ENDIF}
 {$ENDIF}
@@ -162,16 +190,16 @@ const
 
   procedure FormatExtension(var AStr: string);
   begin
-    if TPath.GetFileNameWithoutExtension(AStr) <> AStr then
-      AStr := TPath.ChangeExtension(AStr, '.pas');
+    if not AStr.ToLower.EndsWith('.pas') then
+      AStr := AStr + '.pas';
   end;
 
 var
-  I: Integer;
+  LIndex: Integer;
 begin
-  for I := 0 to Pred(Length(LIST_REGEx_UNIT_NAME)) do
+  for LIndex := 0 to Pred(Length(LIST_REGEx_UNIT_NAME)) do
   begin
-    Result := ExtractValue(AStr, LIST_REGEx_UNIT_NAME[I]);
+    Result := ExtractValue(AStr, LIST_REGEx_UNIT_NAME[LIndex]);
     if not Result.IsEmpty then
       Break;
   end;
@@ -187,11 +215,11 @@ const
     'jcldebug', 'Apm4D'
     );
 var
-  Current: string;
+  LCurrent: string;
 begin
-  for Current in Units do
+  for LCurrent in Units do
   begin
-    Result := AUnitName.ToLower.Trim.StartsWith(Current.ToLower);
+    Result := AUnitName.ToLower.Trim.StartsWith(LCurrent.ToLower);
     if Result then
       Exit;
   end;

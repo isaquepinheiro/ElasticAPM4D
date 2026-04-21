@@ -30,8 +30,9 @@ type
   [Test]
   procedure TestSpanContainsRequiredElasticFields;
 
-  [Test]
-  procedure TestErrorContainsRequiredElasticFields;
+    [Test]
+    procedure TestErrorContainsRequiredElasticFields;
+  end;
 implementation
 
 { TTestSerializer }
