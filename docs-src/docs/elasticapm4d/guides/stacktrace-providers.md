@@ -9,10 +9,10 @@ Detailed stacktraces are essential for diagnosing errors in production. ElasticA
 
 | Provider | Project Define | Requirement |
 |----------|----------------|-------------|
-| **MadExcept** | `madExcept` | MadExcept 4+ installed and active in the project. |
-| **EurekaLog** | `EUREKALOG` | EurekaLog 7+ installed and active in the project. |
-| **JEDI-JCL** | `jcl` | JCL Debug units and stack tracking enabled. |
-| **Default** | None | Uses internal Delphi stacktrace (limited). |
+| **MadExcept** | `madExcept` | MadExcept 4+ installed. Uses `MadStackTrace` unit. |
+| **EurekaLog** | `EUREKALOG` | EurekaLog 7+ installed. Uses `ExceptionLog7` and `ECallStack` units. |
+| **JEDI-JCL** | `jcl` | JCL Debug units and stack tracking enabled. Uses `JclDebug` unit. |
+| **Default** | None | Uses internal Delphi stacktrace (requires debug symbols). |
 
 ## How to Enable
 
