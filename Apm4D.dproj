@@ -1,4 +1,4 @@
-﻿<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
     <PropertyGroup>
         <ProjectGuid>{51C07539-AB7F-423E-9072-AD0C200C6A07}</ProjectGuid>
         <MainSource>Apm4D.dpk</MainSource>
@@ -71,7 +71,7 @@
         <RuntimeOnlyPackage>true</RuntimeOnlyPackage>
         <VerInfo_Locale>1046</VerInfo_Locale>
         <VerInfo_Keys>CompanyName=;FileDescription=$(MSBuildProjectName);FileVersion=1.0.0.0;InternalName=;LegalCopyright=;LegalTrademarks=;OriginalFilename=;ProgramID=com.embarcadero.$(MSBuildProjectName);ProductName=$(MSBuildProjectName);ProductVersion=1.0.0.0;Comments=</VerInfo_Keys>
-        <DCC_Define>Jcl;$(DCC_Define)</DCC_Define>
+        <DCC_Define>$(DCC_Define)</DCC_Define>
         <DCC_FrameworkPath>./source/3rd/Neon;$(DCC_FrameworkPath)</DCC_FrameworkPath>
     </PropertyGroup>
     <PropertyGroup Condition="'$(Base_Win32)'!=''">
@@ -176,6 +176,8 @@
         <DCCReference Include="source\Apm4D.Share.Stacktrace.pas"/>
         <DCCReference Include="source\Apm4D.Share.TimestampEpoch.pas"/>
         <DCCReference Include="source\Apm4D.Share.Types.pas"/>
+        <DCCReference Include="source\Apm4D.HttpClient.Indy.pas"/>
+        <DCCReference Include="source\Apm4D.HttpClient.Mock.pas"/>
         <DCCReference Include="source\Apm4D.Share.User.pas"/>
         <DCCReference Include="source\Apm4D.Share.Uuid.pas"/>
         <DCCReference Include="source\Apm4D.Span.Context.Db.pas"/>

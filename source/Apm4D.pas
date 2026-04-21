@@ -1,4 +1,4 @@
-﻿{ ******************************************************* }
+{ ******************************************************* }
 { }
 { Delphi Elastic Apm Agent }
 { }
@@ -133,7 +133,7 @@ type
     /// Params:
     /// StatusCode -> The http status code response.
     /// </summary>
-    class procedure EndSpan(const StatusCode: Integer); overload; static;
+    class procedure EndSpan(const AStatusCode: Integer); overload; static;
     /// <summary>
     /// Method to pause the current Transaction and Apm4D.Span.
     /// </summary>
@@ -159,14 +159,14 @@ type
     /// Params:
     /// E -> Delphi Exception
     /// </summary>
-    class procedure AddError(E: Exception); overload; static;
+    class procedure AddError(const AE: Exception); overload; static;
 
     /// <summary>
     /// Method to add a http request exception in a Transaction. It must have a Transaction open
     /// Params:
     /// E -> Http Delphi Exception
     /// </summary>
-    class procedure AddError(E: EIdHTTPProtocolException); overload; static;
+    class procedure AddError(const AE: EIdHTTPProtocolException); overload; static;
 
     /// <summary>
     /// Method to add a TRESTClient exception in a http request Transaction. It must have a Transaction open
@@ -207,12 +207,12 @@ end;
 
 class function TApm4D.StartTransactionRequest(const ARequest: TRESTRequest): TTransaction;
 var
-  Name: string;
+  LName: string;
 begin
-  Name := ARequest.Resource;
-  if Name.IsEmpty then
-    Name := ARequest.Client.BaseURL;
-  Result := StartTransactionRequest(Name);
+  LName := ARequest.Resource;
+  if LName.IsEmpty then
+    LName := ARequest.Client.BaseURL;
+  Result := StartTransactionRequest(LName);
 end;
 
 class function TApm4D.StartTransactionRequest(const AResource, AMethod, ATraceId: string): TTransaction;
@@ -269,6 +269,9 @@ end;
 
 class function TApm4D.StartSpan(const AName, AType: string): TSpan;
 begin
+  if not Assigned(FData) then
+    raise ETransactionNotFound.Create('Apm4D -> Cannot start span without an active transaction');
+
   Result := FData.StartSpan(AName, AType);
 end;
 
@@ -315,7 +318,7 @@ begin
   FData.EndSpan;
 end;
 
-class procedure TApm4D.EndSpan(const StatusCode: Integer);
+class procedure TApm4D.EndSpan(const AStatusCode: Integer);
 begin
   if not ExistsTransaction then
     Exit;
@@ -323,8 +326,8 @@ begin
   if not FData.SpanIsOpened then
     Exit;
 
-  FData.CurrentSpan.Context.Http.AddStatusCode(StatusCode);
-  FData.Transaction.Result := StatusCode.ToString;
+  FData.CurrentSpan.Context.Http.AddStatusCode(AStatusCode);
+  FData.Transaction.Result := AStatusCode.ToString;
   FData.EndSpan;
 end;
 
@@ -360,20 +363,20 @@ begin
   Result := ExistsTransaction and Transaction.IsPaused;
 end;
 
-class procedure TApm4D.AddError(E: Exception);
+class procedure TApm4D.AddError(const AE: Exception);
 var
-  Error: TError;
+  LError: TError;
 begin
   if not Assigned(FData) then
     Exit;
 
-  Error := GetErrorInstance;
+  LError := GetErrorInstance;
 
-  Error.Exception.&type := E.ClassName;
-  Error.Exception.message := E.message;
-  FData.Transaction.Result := E.message;
+  LError.Exception.&type := AE.ClassName;
+  LError.Exception.message := AE.message;
+  FData.Transaction.Result := AE.message;
 
-  AddError(Error);
+  AddError(LError);
 end;
 
 class procedure TApm4D.AddError(AError: TError);
@@ -401,24 +404,24 @@ begin
   AddError(Error);
 end;
 
-class procedure TApm4D.AddError(E: EIdHTTPProtocolException);
+class procedure TApm4D.AddError(const AE: EIdHTTPProtocolException);
 var
-  Error: TError;
+  LError: TError;
 begin
   if not Assigned(FData) then
     Exit;
 
-  Error := GetErrorInstance;
+  LError := GetErrorInstance;
 
-  Error.Exception.Code := E.ErrorCode.ToString;
-  Error.Exception.message := E.ErrorMessage;
-  if Error.Exception.message.IsEmpty then
-    Error.Exception.message := E.Message;
-  Error.Exception.&type := E.ClassName;
-  Error.Context.AddResponse(E.ErrorCode);
-  FData.Transaction.Result := Error.Exception.Code + ' ' + E.ErrorMessage;
+  LError.Exception.Code := AE.ErrorCode.ToString;
+  LError.Exception.message := AE.ErrorMessage;
+  if LError.Exception.message.IsEmpty then
+    LError.Exception.message := AE.Message;
+  LError.Exception.&type := AE.ClassName;
+  LError.Context.AddResponse(AE.ErrorCode);
+  FData.Transaction.Result := LError.Exception.Code + ' ' + AE.ErrorMessage;
 
-  AddError(Error);
+  AddError(LError);
 end;
 
 

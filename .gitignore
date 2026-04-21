@@ -65,3 +65,14 @@ __recovery/
 # Castalia statistics file (since XE7 Castalia is distributed with Delphi)
 *.stat
 source/3rd/
+
+# DUnitX — saída de runner local/CI (evita poluir git status / diffs)
+dunitx-results.xml
+
+tests/Win32/
+tests/Win64/
+
+Suite-testes.*
+
+# Build system — temporary artifacts (agents' compilation workflow)
+.build/
