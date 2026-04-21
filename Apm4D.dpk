@@ -81,6 +81,8 @@ contains
   Apm4D.Share.Service in 'source\Apm4D.Share.Service.pas',
   Apm4D.Share.Service.Runtime in 'source\Apm4D.Share.Service.Runtime.pas',
   Apm4D.Share.Stacktrace.Jcl in 'source\Apm4D.Share.Stacktrace.Jcl.pas',
+  Apm4D.Share.Stacktrace.MadExcept in 'source\Apm4D.Share.Stacktrace.MadExcept.pas',
+  Apm4D.Share.Stacktrace.EurekaLog in 'source\Apm4D.Share.Stacktrace.EurekaLog.pas',
   Apm4D.Share.Stacktrace in 'source\Apm4D.Share.Stacktrace.pas',
   Apm4D.Share.TimestampEpoch in 'source\Apm4D.Share.TimestampEpoch.pas',
   Apm4D.Share.Types in 'source\Apm4D.Share.Types.pas',

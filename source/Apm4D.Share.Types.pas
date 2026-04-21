@@ -15,6 +15,8 @@ uses
 type
   TOutcome = (success, failure, unknown);
 
+  TApm4DStacktraceProvider = (spAutomatic, spMadExcept, spEurekaLog, spJcl, spNone);
+
   EElasticAPM4DException = class(Exception);
 
   ETransactionNotFound = class(EElasticAPM4DException)

@@ -2,7 +2,7 @@
 
 > Agente de Application Performance Monitoring nativo para Delphi integrado ao Elastic APM.
 
-**Última atualização:** 2026-04-21
+**Última atualização:** 2026-04-21 17:30
 
 ---
 
@@ -45,8 +45,9 @@
 **Objetivo:** Testar integrações diretas e HTTP com abstrações.
 **Previsão:** Q3 2026
 
-- [ ] Abstração de cliente HTTP (IHttpClient)
-- [ ] Testes de chamadas HTTP com mock
+- [x] Abstração de cliente HTTP (IHttpClient) — delivered v0.1.2 2026-04-21
+- [x] Testes de chamadas HTTP com mock — delivered v0.1.2 2026-04-21
+- [x] Suporte para MadExcept e EurekaLog — delivered 2026-04-21
 
 ---
 

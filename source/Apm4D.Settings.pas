@@ -48,6 +48,7 @@ type
     class var FElastic: TElasticSettings;
     class var FLog: TLogSettings;
     class var FStackTracer: TStackTracerClass;
+    class var FStacktraceProvider: TApm4DStacktraceProvider;
 {$IFDEF MSWINDOWS}
     class var FInterceptors: TDictionary<TApm4DInterceptorClass, TArray<TClass>>;
 {$ENDIF}
@@ -70,8 +71,11 @@ type
     class procedure RegisterInterceptor(AInterceptor: TApm4DInterceptorClass; AClasses: TArray<TClass>);
     class function GetInterceptors: TDictionary<TApm4DInterceptorClass, TArray<TClass>>;
 {$ENDIF}
-    class procedure AddStackTracer(AStackTracer: TStackTracerClass);
+    class procedure AddStackTracer(const AStackTracer: TStackTracerClass);
     class function CreateStackTracer: TStackTracer;
+
+    class function StacktraceProvider: TApm4DStacktraceProvider; static;
+    class procedure SetStacktraceProvider(const AValue: TApm4DStacktraceProvider); static;
     /// <summary>
     /// Register a custom metricset class.
     /// </summary>
@@ -87,7 +91,7 @@ type
     /// </summary>
     class procedure ClearMetricsets;
 
-    class procedure SetHttpClientFactory(AFactory: TApm4DHttpClientFactory);
+    class procedure SetHttpClientFactory(const AFactory: TApm4DHttpClientFactory);
     class function CreateHttpClient: IApm4DHttpClient;
   end;
 
@@ -95,7 +99,11 @@ implementation
 
 Uses
 {$IFDEF MSWINDOWS} Vcl.Forms, {$ENDIF}
-  System.SysUtils, System.DateUtils, System.Variants, Apm4D.HttpClient.Indy;
+  System.SysUtils, System.DateUtils, System.Variants, Apm4D.HttpClient.Indy
+  {$IFDEF jcl}, Apm4D.Share.Stacktrace.Jcl{$ENDIF}
+  {$IFDEF madExcept}, Apm4D.Share.Stacktrace.MadExcept{$ENDIF}
+  {$IFDEF EUREKALOG}, Apm4D.Share.Stacktrace.EurekaLog{$ENDIF};
+
 
 { TApm4DSettings }
 
@@ -159,7 +167,7 @@ begin
   end;
 end;
 
-class procedure TApm4DSettings.AddStackTracer(AStackTracer: TStackTracerClass);
+class procedure TApm4DSettings.AddStackTracer(const AStackTracer: TStackTracerClass);
 begin
   FLock.Enter;
   try
@@ -170,12 +178,71 @@ begin
 end;
 
 class function TApm4DSettings.CreateStackTracer: TStackTracer;
+var
+  LProvider: TApm4DStacktraceProvider;
 begin
   FLock.Enter;
   try
     Result := nil;
-    if Assigned(FStackTracer) then
-      Result := FStackTracer.Create; 
+    LProvider := FStacktraceProvider;
+
+    if LProvider = spAutomatic then
+    begin
+      {$IFDEF madExcept}
+      LProvider := spMadExcept;
+      {$ELSEIF DEFINED(EUREKALOG)}
+      LProvider := spEurekaLog;
+      {$ELSEIF DEFINED(jcl)}
+      LProvider := spJcl;
+      {$ELSE}
+      LProvider := spNone;
+      {$ENDIF}
+    end;
+
+    case LProvider of
+      spMadExcept:
+        begin
+          {$IFDEF madExcept}
+          Result := TStacktraceMadExcept.Create;
+          {$ENDIF}
+        end;
+      spEurekaLog:
+        begin
+          {$IFDEF EUREKALOG}
+          Result := TStacktraceEurekaLog.Create;
+          {$ENDIF}
+        end;
+      spJcl:
+        begin
+          {$IFDEF jcl}
+          Result := TStacktraceJCL.Create;
+          {$ENDIF}
+        end;
+      spNone: Result := nil;
+    end;
+
+    if (Result = nil) and Assigned(FStackTracer) then
+      Result := FStackTracer.Create;
+  finally
+    FLock.Leave;
+  end;
+end;
+
+class function TApm4DSettings.StacktraceProvider: TApm4DStacktraceProvider;
+begin
+  FLock.Enter;
+  try
+    Result := FStacktraceProvider;
+  finally
+    FLock.Leave;
+  end;
+end;
+
+class procedure TApm4DSettings.SetStacktraceProvider(const AValue: TApm4DStacktraceProvider);
+begin
+  FLock.Enter;
+  try
+    FStacktraceProvider := AValue;
   finally
     FLock.Leave;
   end;
@@ -199,8 +266,10 @@ begin
     if FInterceptors <> nil then
       FreeAndNil(FInterceptors);
 {$ENDIF}
-    if FMetricsets <> nil then
+    if Assigned(FMetricsets) then
       FreeAndNil(FMetricsets);
+    FStackTracer := nil;
+    FStacktraceProvider := spAutomatic;
   finally
     FLock.Leave;
   end;
@@ -305,7 +374,7 @@ begin
   end;
 end;
 
-class procedure TApm4DSettings.SetHttpClientFactory(AFactory: TApm4DHttpClientFactory);
+class procedure TApm4DSettings.SetHttpClientFactory(const AFactory: TApm4DHttpClientFactory);
 begin
   FLock.Enter;
   try
@@ -331,6 +400,7 @@ initialization
 
 TApm4DSettings.FLock := TCriticalSection.Create;
 TApm4DSettings.FHttpClientFactory := TApm4DIdHttpClientFactory;
+TApm4DSettings.FStacktraceProvider := spAutomatic;
 
 finalization
 
