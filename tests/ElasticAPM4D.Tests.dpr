@@ -25,7 +25,9 @@ uses
   Test.EdgeCases in 'EdgeCases\Test.EdgeCases.pas',
   Apm4D.Tests.Stacktrace in 'Core\Apm4D.Tests.Stacktrace.pas',
   Test.StacktraceProviders in 'Core\Test.StacktraceProviders.pas',
-  Apm4D.SendThread.Test in 'Core\Apm4D.SendThread.Test.pas';
+  Apm4D.SendThread.Test in 'Core\Apm4D.SendThread.Test.pas',
+  Test.VclInterceptors in 'Interceptors\Test.VclInterceptors.pas',
+  Test.DataInterceptors in 'Interceptors\Test.DataInterceptors.pas';
 
 var
   runner : ITestRunner;

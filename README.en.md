@@ -174,10 +174,9 @@ end;
 // In FormCreate:
 procedure TMainForm.FormCreate(Sender: TObject);
 begin
-  TApm4DSettings.RegisterInterceptor(TApm4DInterceptOnClick, [TButton]);
-  TApm4DSettings.RegisterInterceptor(TApm4DInterceptDataSet, [TDataSet]);
-  TApm4DSettings.RegisterInterceptor(TApm4DInterceptRESTRequest, [TRESTRequest]);
-  
+  // Inject interceptors into the form.
+  // Standard classes (TButton, TBitBtn, TDataSet, TCustomRESTRequest) 
+  // are already pre-registered by the agent by default.
   FInterceptorHandler := TApm4DInterceptorBuilder.CreateDefault(Self);
 end;
 ```

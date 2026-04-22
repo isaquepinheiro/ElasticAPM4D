@@ -54,6 +54,7 @@ type
 {$ENDIF}
     class var FMetricsets: TList<TApm4DMetricsetClass>;
     class var FHttpClientFactory: TApm4DHttpClientFactory;
+    class procedure _RegisterDefaults; static;
   public
     class function Database: TDatabaseSettings; static;
     class function User: TUserSettings; static;
@@ -68,7 +69,7 @@ type
     class procedure ReleaseInstance;
 
 {$IFDEF MSWINDOWS}
-    class procedure RegisterInterceptor(AInterceptor: TApm4DInterceptorClass; AClasses: TArray<TClass>);
+    class procedure RegisterInterceptor(const AInterceptor: TApm4DInterceptorClass; const AClasses: TArray<TClass>);
     class function GetInterceptors: TDictionary<TApm4DInterceptorClass, TArray<TClass>>;
 {$ENDIF}
     class procedure AddStackTracer(const AStackTracer: TStackTracerClass);
@@ -79,7 +80,7 @@ type
     /// <summary>
     /// Register a custom metricset class.
     /// </summary>
-    class procedure RegisterMetricset(AMetricsetClass: TApm4DMetricsetClass);
+    class procedure RegisterMetricset(const AMetricsetClass: TApm4DMetricsetClass);
     
     /// <summary>
     /// Get all registered metricsets.
@@ -98,8 +99,9 @@ type
 implementation
 
 Uses
-{$IFDEF MSWINDOWS} Vcl.Forms, {$ENDIF}
-  System.SysUtils, System.DateUtils, System.Variants, Apm4D.HttpClient.Indy
+{$IFDEF MSWINDOWS} Vcl.Forms, Vcl.StdCtrls, Vcl.Buttons, {$ENDIF}
+  System.SysUtils, System.DateUtils, System.Variants, Apm4D.HttpClient.Indy,
+  Data.DB, REST.Client
   {$IFDEF jcl}, Apm4D.Share.Stacktrace.Jcl{$ENDIF}
   {$IFDEF madExcept}, Apm4D.Share.Stacktrace.MadExcept{$ENDIF}
   {$IFDEF EUREKALOG}, Apm4D.Share.Stacktrace.EurekaLog{$ENDIF};
@@ -308,7 +310,7 @@ end;
 {$IFDEF MSWINDOWS}
 
 
-class procedure TApm4DSettings.RegisterInterceptor(AInterceptor: TApm4DInterceptorClass; AClasses: TArray<TClass>);
+class procedure TApm4DSettings.RegisterInterceptor(const AInterceptor: TApm4DInterceptorClass; const AClasses: TArray<TClass>);
 begin
   FLock.Enter;
   try
@@ -325,7 +327,10 @@ begin
   FLock.Enter;
   try
     if not assigned(FInterceptors) then
+    begin
       FInterceptors := TDictionary < TApm4DInterceptorClass, TArray < TClass >>.Create;
+      _RegisterDefaults;
+    end;
 
     Result := FInterceptors;
   finally
@@ -333,9 +338,18 @@ begin
   end;
 end;
 
+class procedure TApm4DSettings._RegisterDefaults;
+begin
+{$IFDEF MSWINDOWS}
+  RegisterInterceptor(TApm4DInterceptOnClick, [TButton, TBitBtn]);
+  RegisterInterceptor(TApm4DInterceptDataSet, [TDataSet]);
+  RegisterInterceptor(TApm4DInterceptRESTRequest, [TCustomRESTRequest]);
+{$ENDIF}
+end;
+
 {$ENDIF}
 
-class procedure TApm4DSettings.RegisterMetricset(AMetricsetClass: TApm4DMetricsetClass);
+class procedure TApm4DSettings.RegisterMetricset(const AMetricsetClass: TApm4DMetricsetClass);
 begin
   FLock.Enter;
   try

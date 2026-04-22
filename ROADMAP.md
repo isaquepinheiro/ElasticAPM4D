@@ -2,7 +2,7 @@
 
 > Agente de Application Performance Monitoring nativo para Delphi integrado ao Elastic APM.
 
-**Última atualização:** 2026-04-21 17:30
+**Última atualização:** 2026-04-21 18:15
 
 ---
 

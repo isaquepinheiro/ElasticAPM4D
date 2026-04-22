@@ -498,14 +498,13 @@ uses
 // No FormCreate ou DataModuleCreate:
 procedure TFormPrincipal.FormCreate(Sender: TObject);
 begin
-  // Registrar interceptors globais (fazer uma vez na aplicação)
-  TApm4DSettings.RegisterInterceptor(TApm4DInterceptOnClick, [TButton, TSpeedButton, TBitBtn]);
-  TApm4DSettings.RegisterInterceptor(TApm4DInterceptDataSet, [TDataSet]);
-  TApm4DSettings.RegisterInterceptor(TApm4DInterceptDBConnection, [TFDConnection]);
-  TApm4DSettings.RegisterInterceptor(TApm4DInterceptRESTRequest, [TRESTRequest]);
-  
-  // Injetar interceptors no formulário
+  // Injetar interceptors no formulário.
+  // Os interceptors para classes padrão (TButton, TBitBtn, TDataSet, TCustomRESTRequest)
+  // já são registrados automaticamente pelo agente.
   FInterceptorHandler := TApm4DInterceptorBuilder.CreateDefault(Self);
+  
+  // Se desejar registrar interceptors para outras classes específicas ou componentes de terceiros:
+  // TApm4DSettings.RegisterInterceptor(TApm4DInterceptOnClick, [TSpeedButton]);
 end;
 ```
 
