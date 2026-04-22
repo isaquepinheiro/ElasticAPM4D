@@ -281,6 +281,7 @@ class procedure TApm4DSettings.Activate;
 begin
   FLock.Enter;
   try
+    Randomize;
     FIsActive := True;
   finally
     FLock.Leave;
