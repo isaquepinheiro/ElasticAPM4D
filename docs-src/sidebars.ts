@@ -20,44 +20,44 @@ const sidebars: SidebarsConfig = {
           type: 'category',
           label: 'Getting Started',
           items: [
-            'elasticapm4d/getting-started/installation',
             'elasticapm4d/getting-started/quickstart',
-          ],
-        },
-        {
-          type: 'category',
-          label: 'Architecture',
-          items: [
-            'elasticapm4d/architecture/overview',
-            'elasticapm4d/architecture/runtime-flow',
-          ],
-        },
-        {
-          type: 'category',
-          label: 'Reference',
-          items: [
-            'elasticapm4d/reference/api',
-            'elasticapm4d/reference/configuration',
           ],
         },
         {
           type: 'category',
           label: 'Guides',
           items: [
-            'elasticapm4d/guides/stacktrace-providers',
-            'elasticapm4d/guides/custom-transport',
-            'elasticapm4d/guides/local-setup',
+            'elasticapm4d/guides/manual-instrumentation',
+            'elasticapm4d/guides/auto-instrumentation',
           ],
         },
         {
           type: 'category',
-          label: 'Tests & Support',
+          label: 'Reference',
           items: [
-            'elasticapm4d/tests/overview',
+            'elasticapm4d/reference/configuration',
+          ],
+        },
+        {
+          type: 'category',
+          label: 'Troubleshooting',
+          items: [
             'elasticapm4d/troubleshooting/common-errors',
           ],
         },
-
+        {
+          type: 'category',
+          label: 'Advanced (Developer)',
+          items: [
+            'elasticapm4d/architecture/overview',
+            'elasticapm4d/architecture/runtime-flow',
+            'elasticapm4d/reference/api',
+            'elasticapm4d/guides/stacktrace-providers',
+            'elasticapm4d/guides/custom-transport',
+            'elasticapm4d/guides/local-setup',
+            'elasticapm4d/tests/overview',
+          ],
+        },
       ],
     },
   ],

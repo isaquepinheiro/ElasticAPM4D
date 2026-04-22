@@ -1,51 +1,74 @@
 ---
-displayed_sidebar: elasticapm4dSidebar
 title: Quickstart
 ---
 
-## Prerequisites
+# Quickstart
 
-- Delphi project configured to find source/ units.
-- Elastic APM URL configured in TApm4DSettings.Elastic.Url.
+Get up and running with ElasticAPM4D in minutes.
 
-## Minimal example
+## 1. Installation
+
+Add the `source` folder of the ElasticAPM4D repository to your Delphi Library Path (`Tools > Options > IDE > Environment Options > Delphi Options > Library`).
+
+Alternatively, include the files directly in your project.
+
+## 2. Basic Configuration
+
+Configure the agent as early as possible in your application lifecycle (e.g., in the `.dpr` or the main form's `OnCreate`).
 
 ```delphi
 uses
-  Apm4D,
   Apm4D.Settings;
 
-procedure RunSample;
 begin
-  TApm4DSettings.Activate;
-  TApm4DSettings.Application.SetName('MyApp').SetEnvironment('development');
+  TApm4DSettings.Application.ServiceName := 'OrderProcessingService';
+  TApm4DSettings.Application.ServiceVersion := '1.2.0';
+  TApm4DSettings.Application.Environment := 'production';
 
-  TApm4D.StartTransaction('ProcessSales', 'business');
+  TApm4DSettings.Elastic.Url := 'https://your-apm-server:8200';
+  TApm4DSettings.Elastic.Secret := 'your-secret-token';
+
+  // Enable the agent
+  TApm4DSettings.Activate;
+end;
+```
+
+## 3. Your First Transaction
+
+Wrap your important operations in a transaction.
+
+```delphi
+uses
+  Apm4D;
+
+procedure TForm1.btnProcessClick(Sender: TObject);
+begin
+  TApm4D.StartTransaction('ProcessOrder', 'request');
   try
-    TApm4D.StartSpan('LoadOrders', 'db.query');
-    try
-      // business work
-    finally
-      TApm4D.EndSpan;
-    end;
+    // Your business logic here
+    DoWork;
   finally
-    TApm4D.EndTransaction(success);
+    TApm4D.EndTransaction;
   end;
 end;
 ```
 
-## Enabling Stacktrace
+## 4. Capture an Error
 
-To capture detailed stacktraces with file names and line numbers, add the conditional directive for your preferred provider to your project's **Conditional Defines**:
+Capture exceptions automatically.
 
-- **MadExcept:** `madExcept`
-- **EurekaLog:** `EUREKALOG`
-- **JCL:** `jcl`
+```delphi
+try
+  PerformRiskyOperation;
+except
+  on E: Exception do
+  begin
+    TApm4D.CaptureError(E);
+    raise;
+  end;
+end;
+```
 
-The agent automatically detects and uses the first available provider from this list.
+## 5. Verify in Kibana
 
-## Next steps
-
-- [Architecture](../architecture/overview.md)
-- [Runtime Flow](../architecture/runtime-flow.md)
-- [API Reference](../reference/api.md)
+Open Kibana and navigate to **Observability > APM** to see your application data appearing in real-time.

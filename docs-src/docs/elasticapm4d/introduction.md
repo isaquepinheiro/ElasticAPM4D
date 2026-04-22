@@ -1,35 +1,31 @@
 ---
-displayed_sidebar: elasticapm4dSidebar
 title: Introduction
 ---
 
-ElasticAPM4D solves application observability for Delphi applications by exposing a focused API to instrument business operations and runtime events. The library tracks transactions and spans, captures exceptions, records metadata and metricsets, and forwards telemetry to Elastic APM.
+# Introduction
 
-The project uses a facade-first model. Application code calls TApm4D and TApm4DSettings, while the framework handles serialization, queueing, and background transport internally.
+**ElasticAPM4D** is a powerful, native Delphi library that integrates your applications with the Elastic Observability ecosystem. By instrumenting your code with ElasticAPM4D, you gain deep visibility into your application's performance and health.
 
-## Key concepts
+## Why use ElasticAPM4D?
 
-- **Transaction:** top-level business or request operation.
-- **Span:** nested sub-operation executed inside a transaction.
-- **Error event:** exception snapshot attached to the active tracing context.
-- **Metricset:** periodic runtime metrics such as CPU and memory.
-- **Trace context:** distributed tracing continuation with elastic-apm-traceparent.
+In modern software development, understanding how your application behaves in production is crucial. ElasticAPM4D helps you:
 
-## Features
- 
- - **Third-party Stacktrace Support:** Built-in integration with **MadExcept**, **EurekaLog**, and **JEDI-JCL** for detailed error diagnostics.
- - **Flexible Transport:** Decoupled HTTP transport layer allowing custom client implementations.
- - **Resilient Delivery (v1.1.0):** Exponential backoff with jitter for handling transient HTTP 429 and 5xx errors.
- - **Structured Elastic APM intake v2 output.**
- - **Thread-aware transaction context with asynchronous delivery.**
+- **Identify Bottlenecks**: See exactly which parts of your code or database queries are slow.
+- **Debug Faster**: Get detailed stack traces and context for every error that occurs in your application.
+- **Monitor Health**: Keep an eye on system resources and application-specific metrics.
+- **Correlate Data**: Link traces across different services to understand the full lifecycle of a request.
 
-## Target audience
+## How it works
 
-This documentation is for Delphi developers and maintainers who need to instrument applications, validate behavior with tests, and troubleshoot runtime telemetry flow.
+The agent runs as part of your Delphi process. It collects telemetry data and buffers it in an internal queue. A background thread periodically flushes this data to the Elastic APM Server using the [Intake API v2](https://www.elastic.co/guide/en/apm/guide/current/intake-api.html).
 
-## Why use it
+### Data Types
 
-- Native Delphi instrumentation with low adoption friction.
-- High-fidelity error reporting with stacktrace provider support.
-- Performance-oriented asynchronous delivery architecture.
+- **Transactions**: Highest level of instrumentation (e.g., an HTTP request or a background job).
+- **Spans**: Steps within a transaction (e.g., a database query or a method call).
+- **Errors**: Captured exceptions with stack traces.
+- **Metrics**: Periodic snapshots of system/process state.
 
+## License
+
+ElasticAPM4D is licensed under the MIT License.
