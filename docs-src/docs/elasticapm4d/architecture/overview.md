@@ -14,7 +14,7 @@ ElasticAPM4D is a Delphi library layer between application instrumentation calls
 - **TDataController threadvar context:** per-thread transaction state.
 - **TApm4DSerializer:** JSON and NDJSON formatting via REST.Json.
 - **IApm4DHttpClient:** abstraction for HTTP delivery (Indy implementation included by default).
-- **TQueueSingleton + TSendThread:** queue and asynchronous transport pipeline using the HTTP abstraction.
+- **TQueueSingleton + TSendThread:** asynchronous transport pipeline. The send thread implements a **resilient delivery mechanism** with exponential backoff and jitter for transient failures (HTTP 429 and 5xx).
 - **TStacktraceEngine:** abstraction for pluggable stacktrace providers (MadExcept, EurekaLog, JCL).
 - **Interceptor units:** optional automatic instrumentation for VCL and data access flows.
 

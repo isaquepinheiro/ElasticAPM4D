@@ -27,6 +27,9 @@ Configured via `TApm4DSettings.Elastic`.
 | `ServiceNodeName` | `''` | Unique name for the service node. |
 | `FlushInterval` | `10s` | How often to send batched events to the server. |
 | `MaxQueueSize` | `500` | Maximum number of events to queue before dropping new ones. |
+| `MaxRetries` | `5` | Maximum number of retry attempts for transient errors (429, 5xx). |
+| `InitialRetryDelay` | `1000ms` | Initial delay for the exponential backoff algorithm. |
+| `MaxRetryDelay` | `30000ms` | Maximum delay for the exponential backoff algorithm. |
 
 ## Application Metadata
 

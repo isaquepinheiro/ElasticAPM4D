@@ -41,3 +41,4 @@ title: API - Reference
 - Use ReleaseInstance in teardown for isolated tests.
 - Do not assume interceptor availability outside Windows builds.
 - Use documented defaults when explicit settings are not provided.
+- **Resilient Delivery:** The agent automatically retries transient delivery failures (HTTP 429 and 5xx) using an exponential backoff algorithm with jitter.

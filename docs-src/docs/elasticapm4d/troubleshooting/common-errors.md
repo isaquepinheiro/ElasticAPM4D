@@ -16,12 +16,18 @@ title: Common Errors
 - **Action:** call TApm4DSettings.ReleaseInstance in teardown and flush any accessible queue state.
 
 ## No events visible in Elastic APM
-
-- **Symptom:** transactions are created in code but not visible server-side.
-- **Likely cause:** invalid Elastic URL, authentication token, or transport/network failure.
-- **Action:** validate TApm4DSettings.Elastic configuration and endpoint reachability.
-
-## Interceptors do not trigger on Linux
+ 
+ - **Symptom:** transactions are created in code but not visible server-side.
+ - **Likely cause:** invalid Elastic URL, authentication token, or transport/network failure.
+ - **Action:** validate TApm4DSettings.Elastic configuration and endpoint reachability.
+ 
++## Transient delivery failures (429/5xx)
++
++- **Symptom:** Internal log shows 429 (Too Many Requests) or 503 (Service Unavailable) errors.
++- **Likely cause:** APM Server is rate-limiting the agent or experiencing high load.
++- **Action:** The agent automatically retries with exponential backoff. If failures persist, check server logs or increase `MaxRetries` and `MaxRetryDelay` in `TApm4DSettings.Elastic`.
++
+ ## Interceptors do not trigger on Linux
 
 - **Symptom:** OnClick/DataSet/RESTRequest auto-instrumentation is absent on Linux builds.
 - **Likely cause:** VCL interceptors are guarded for Windows platforms only.

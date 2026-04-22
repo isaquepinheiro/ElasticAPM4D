@@ -17,6 +17,6 @@ ElasticAPM4D is a native Delphi APM agent that captures transactions, spans, err
 
 ## Scope
 
-- **Covers:** instrumentation via TApm4D, global settings via TApm4DSettings, queue-based async delivery, NDJSON serialization, built-in interceptors, **stacktrace providers (MadExcept, EurekaLog, JCL)**, and **pluggable HTTP transport**.
+- **Covers:** instrumentation via TApm4D, global settings via TApm4DSettings, **resilient async delivery (backoff/jitter)**, NDJSON serialization, built-in interceptors, stacktrace providers (MadExcept, EurekaLog, JCL), and pluggable HTTP transport.
 - **Does not cover:** hosted Elastic infrastructure setup, CI pipeline orchestration, or legacy Delphi versions (requires D2010+).
 

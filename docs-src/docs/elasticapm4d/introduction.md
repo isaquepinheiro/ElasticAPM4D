@@ -15,12 +15,13 @@ The project uses a facade-first model. Application code calls TApm4D and TApm4DS
 - **Metricset:** periodic runtime metrics such as CPU and memory.
 - **Trace context:** distributed tracing continuation with elastic-apm-traceparent.
 
-## Features (v1.0.0)
-
-- **Third-party Stacktrace Support:** Built-in integration with **MadExcept**, **EurekaLog**, and **JEDI-JCL** for detailed error diagnostics.
-- **Flexible Transport:** Decoupled HTTP transport layer allowing custom client implementations.
-- **Structured Elastic APM intake v2 output.**
-- **Thread-aware transaction context with asynchronous delivery.**
+## Features
+ 
+ - **Third-party Stacktrace Support:** Built-in integration with **MadExcept**, **EurekaLog**, and **JEDI-JCL** for detailed error diagnostics.
+ - **Flexible Transport:** Decoupled HTTP transport layer allowing custom client implementations.
+ - **Resilient Delivery (v1.1.0):** Exponential backoff with jitter for handling transient HTTP 429 and 5xx errors.
+ - **Structured Elastic APM intake v2 output.**
+ - **Thread-aware transaction context with asynchronous delivery.**
 
 ## Target audience
 
