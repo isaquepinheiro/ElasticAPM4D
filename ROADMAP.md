@@ -48,10 +48,11 @@
 - [x] Abstração de cliente HTTP (IHttpClient) — delivered v0.1.2 2026-04-21
 - [x] Testes de chamadas HTTP com mock — delivered v0.1.2 2026-04-21
 - [x] Suporte para MadExcept e EurekaLog — delivered 2026-04-21
-- [x] Interceptors automáticos (UI, DataSet, DBConnection) — delivered v1.1.0-dev 2026-04-22
-- [x] Otimização de Regex nos providers de stacktrace — delivered v1.1.0-dev 2026-04-22
-- [x] Blindagem da captura de exceções Delphi com stacktrace — delivered v1.1.0-dev 2026-04-22
-- [ ] Decouple TApm4DSettings singleton from core domain (TSpan, TError)
+- [x] Interceptors automáticos (UI, DataSet, DBConnection) — delivered v1.1.0 2026-04-22
+- [x] Otimização de Regex nos providers de stacktrace — delivered v1.1.0 2026-04-22
+- [x] Blindagem da captura de exceções Delphi com stacktrace — delivered v1.1.0 2026-04-22
+- [x] Decouple TApm4DSettings singleton from core domain (TSpan, TError) — delivered v1.1.0 2026-04-22
+- [x] Implement resilient retry mechanism with exponential backoff and jitter (#17) — delivered v1.1.0 2026-04-22
 
 ---
 
