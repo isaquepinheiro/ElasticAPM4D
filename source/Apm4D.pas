@@ -11,7 +11,7 @@ interface
 
 uses
   System.SysUtils, System.Generics.Collections, IdHTTP,
-  Apm4D.Span, Apm4D.Transaction, Apm4D.Error, Apm4D.Share.Types, REST.Client,
+  Apm4D.Span, Apm4D.Transaction, Apm4D.Error, Apm4D.Share.Types, Apm4D.Share.Stacktrace, REST.Client,
   Apm4D.DataController, Apm4D.Settings, Apm4D.Settings.Log, Apm4D.Interceptor.Handler;
 
 type
@@ -196,7 +196,7 @@ begin
   if ExistsTransaction then
     EndTransaction(unknown);
 
-  FData := TDataController.Create;
+  FData := TDataController.Create(TApm4DSettings.CreateStackTracer);
   FData.Transaction.Start(AName, AType);
 
   if not ATraceId.IsEmpty then
@@ -334,9 +334,9 @@ end;
 class function TApm4D.GetErrorInstance: TError;
 begin
   if FData.SpanIsOpened then
-    Result := TError.Create(Span.trace_id, Span.transaction_id, Span.id)
+    Result := TError.Create(Span.trace_id, Span.transaction_id, Span.id, TApm4DSettings.CreateStackTracer)
   else
-    Result := TError.Create(Transaction.trace_id, Transaction.id, Transaction.id);
+    Result := TError.Create(Transaction.trace_id, Transaction.id, Transaction.id, TApm4DSettings.CreateStackTracer);
 end;
 
 class procedure TApm4D.Pause;
@@ -389,19 +389,19 @@ end;
 
 class procedure TApm4D.AddError(AResponse: TCustomRESTResponse);
 var
-  Error: TError;
+  LError: TError;
 begin
   if not Assigned(FData) then
     Exit;
 
-  Error := GetErrorInstance;
-  Error.Exception.Code := AResponse.StatusCode.ToString;
-  Error.Exception.message := AResponse.ErrorMessage;
-  Error.Exception.&type := AResponse.StatusText;
-  Error.Context.AddResponse(AResponse.StatusCode);
+  LError := GetErrorInstance;
+  LError.Exception.Code := AResponse.StatusCode.ToString;
+  LError.Exception.message := AResponse.ErrorMessage;
+  LError.Exception.&type := AResponse.StatusText;
+  LError.Context.AddResponse(AResponse.StatusCode);
   FData.Transaction.Result := AResponse.StatusCode.ToString + ' ' + AResponse.StatusText;
 
-  AddError(Error);
+  AddError(LError);
 end;
 
 class procedure TApm4D.AddError(const AE: EIdHTTPProtocolException);

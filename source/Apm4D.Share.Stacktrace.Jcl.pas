@@ -19,7 +19,6 @@ type
   private const
     MAX_FRAMES = 15; // Limit stacktrace to 15 most relevant frames
   private
-    FStackTrace: TArray<TStacktrace>; 
     class var FRegExValid: TRegEx;
     class var FRegExClassName: TRegEx;
     class var FRegExFunctionName1: TRegEx;
@@ -39,10 +38,9 @@ type
     function IsValidStacktrace(const AStr: string): Boolean;
     function IsIgnoreUnit(const AUnitName: string): Boolean;
   public
-    constructor Create;
+    constructor Create; override;
     class constructor Create;
 
-    function Get: TArray<TStacktrace>; override;
     function GetCulprit: string; override;
   end;
 
@@ -246,9 +244,5 @@ begin
   end;
 end;
 
-function TStacktraceJCL.Get: TArray<TStacktrace>;
-begin
-  Result := FStackTrace; 
-end;
 
 end.

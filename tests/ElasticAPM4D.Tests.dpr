@@ -24,6 +24,7 @@ uses
   Test.ThreadSafety in 'Concurrency\Test.ThreadSafety.pas',
   Test.EdgeCases in 'EdgeCases\Test.EdgeCases.pas',
   Apm4D.Tests.Stacktrace in 'Core\Apm4D.Tests.Stacktrace.pas',
+  Apm4D.Tests.Stacktrace.Hardening in 'Core\Apm4D.Tests.Stacktrace.Hardening.pas',
   Test.StacktraceProviders in 'Core\Test.StacktraceProviders.pas',
   Apm4D.SendThread.Test in 'Core\Apm4D.SendThread.Test.pas',
   Test.VclInterceptors in 'Interceptors\Test.VclInterceptors.pas',

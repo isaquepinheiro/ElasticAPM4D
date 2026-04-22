@@ -1,4 +1,4 @@
-﻿{*******************************************************}
+{*******************************************************}
 {                                                       }
 {             Delphi Elastic Apm Agent                  }
 {                                                       }
@@ -11,6 +11,7 @@ interface
 
 uses
 
+  Apm4D.Share.Stacktrace,
   Apm4D.Share.Context,
   Apm4D.Share.Types,
   Apm4D.Transaction.Experience,
@@ -39,6 +40,7 @@ type
     Foutcome: string;
     Fsession: TTransactionSession;
     FIsPaused: Boolean;
+    FStackTracerFactory: TStackTracerFactory;
   public
     constructor Create;
     destructor Destroy; override;
@@ -88,6 +90,7 @@ type
     property Experience: TTransactionExperience read Fexperience write Fexperience;
     property Outcome: string read Foutcome;
     property Session: TTransactionSession read Fsession;
+    property StackTracerFactory: TStackTracerFactory read FStackTracerFactory write FStackTracerFactory;
   end;
 
 implementation

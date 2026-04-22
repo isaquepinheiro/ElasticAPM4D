@@ -13,7 +13,7 @@ type
   // Test double que produz frames e culprit previsveis e deterministas
   TTestStackTracer = class(TStackTracer)
   public
-    function Get: TArray<TStacktrace>; override;
+    constructor Create; override;
     function GetCulprit: string; override;
   end;
 
@@ -45,16 +45,17 @@ implementation
 
 { TTestStackTracer }
 
-function TTestStackTracer.Get: TArray<TStacktrace>;
+constructor TTestStackTracer.Create;
 var
   LFrame: TStacktrace;
 begin
+  inherited Create;
   LFrame := TStacktrace.Create;
   LFrame.Filename := 'MyUnit.pas';
   LFrame.Lineno := 42;
   LFrame.Context_line := 'TMyClass.DoSomething';
   LFrame.Module := 'TMyClass';
-  Result := [LFrame];
+  FStackTrace := [LFrame];
 end;
 
 function TTestStackTracer.GetCulprit: string;
@@ -79,7 +80,7 @@ procedure TTestError.Should_Create_With_Valid_Ids;
 var
   LError: TError;
 begin
-  LError := TError.Create('trace123', 'trans123', 'parent123');
+  LError := TError.Create('trace123', 'trans123', 'parent123', nil);
   try
     Assert.IsNotEmpty(LError.Id, 'Error ID should be generated');
     Assert.AreEqual('trace123', LError.Trace_id);
@@ -95,7 +96,7 @@ procedure TTestError.Should_Set_Exception_Message_And_Type;
 var
   LError: TError;
 begin
-  LError := TError.Create('trace', 'trans', 'parent');
+  LError := TError.Create('trace', 'trans', 'parent', nil);
   try
     LError.Exception.&Message := 'Division by zero';
     LError.Exception.&Type := 'EZeroDivide';
@@ -112,11 +113,11 @@ var
   LError: TError;
 begin
   // Sem StackTracer registrado: culprit e frames devem estar ausentes
-  LError := TError.Create('trace', 'trans', 'parent');
+  LError := TError.Create('trace', 'trans', 'parent', nil);
   try
     Assert.AreEqual('', LError.Culprit,
       'Culprit must be empty when no StackTracer is registered');
-    Assert.AreEqual(0, Length(LError.Exception.Stacktrace),
+    Assert.AreEqual(0, Integer(Length(LError.Exception.Stacktrace)),
       'Stacktrace must be empty when no StackTracer is registered');
   finally
     LError.Free;
@@ -127,8 +128,11 @@ procedure TTestError.Should_Have_Culprit_When_StackTracer_Is_Registered;
 var
   LError: TError;
 begin
-  TApm4DSettings.AddStackTracer(TTestStackTracer);
-  LError := TError.Create('trace', 'trans', 'parent');
+  LError := TError.Create('trace', 'trans', 'parent',
+    function: TStackTracer
+    begin
+      Result := TTestStackTracer.Create;
+    end);
   try
     Assert.AreEqual('TMyClass.DoSomething', LError.Culprit,
       'Culprit must be populated from StackTracer when one is registered');
@@ -142,10 +146,13 @@ var
   LError: TError;
   LFrame: TStacktrace;
 begin
-  TApm4DSettings.AddStackTracer(TTestStackTracer);
-  LError := TError.Create('trace', 'trans', 'parent');
+  LError := TError.Create('trace', 'trans', 'parent',
+    function: TStackTracer
+    begin
+      Result := TTestStackTracer.Create;
+    end);
   try
-    Assert.AreEqual(1, Length(LError.Exception.Stacktrace),
+    Assert.AreEqual(1, Integer(Length(LError.Exception.Stacktrace)),
       'Stacktrace must contain exactly one frame from the test tracer');
     LFrame := LError.Exception.Stacktrace[0];
     Assert.AreEqual('MyUnit.pas', LFrame.Filename,

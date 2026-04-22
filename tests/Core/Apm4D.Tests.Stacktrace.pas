@@ -113,7 +113,7 @@ begin
     LMock.Add('[0040510D] MyUnit.TMyClass.MyMethod (Line 123, "MyUnit.pas" + 5) + 0');
     LTracer := TTestStacktraceJCL.Create(LMock);
     try
-      Assert.AreEqual(1, Length(LTracer.Get));
+      Assert.AreEqual(1, Integer(Length(LTracer.Get)));
       LFrame := LTracer.Get[0];
       Assert.AreEqual(123, LFrame.lineno);
       Assert.AreEqual('MyUnit.pas', LFrame.filename);
@@ -216,7 +216,7 @@ begin
       
     LTracer := TTestStacktraceJCL.Create(LMock);
     try
-      Assert.AreEqual(15, Length(LTracer.Get), 'Should limit to MAX_FRAMES (15)');
+      Assert.AreEqual(15, Integer(Length(LTracer.Get)), 'Should limit to MAX_FRAMES (15)');
     finally
       LTracer.Free;
     end;

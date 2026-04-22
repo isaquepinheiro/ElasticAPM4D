@@ -107,8 +107,8 @@ begin
       LThreads[LIndex].Free;
     end;
 
-    Assert.AreEqual(0, LErrors.Count, 'No thread should raise runtime errors');
-    Assert.AreEqual(THREAD_COUNT, LCollectedIds.Count, 'Each thread should produce one transaction id/trace pair');
+    Assert.AreEqual(0, Integer(LErrors.Count), 'No thread should raise runtime errors');
+    Assert.AreEqual(THREAD_COUNT, Integer(LCollectedIds.Count), 'Each thread should produce one transaction id/trace pair');
 
     LUniqueIds := TDictionary<string, Boolean>.Create;
     try
@@ -117,7 +117,7 @@ begin
         Assert.IsFalse(LUniqueIds.ContainsKey(LItem), 'Each transaction id/trace pair should be unique per thread');
         LUniqueIds.Add(LItem, True);
       end;
-      Assert.AreEqual(THREAD_COUNT, LUniqueIds.Count, 'All collected transaction pairs should be unique');
+      Assert.AreEqual(THREAD_COUNT, Integer(LUniqueIds.Count), 'All collected transaction pairs should be unique');
     finally
       LUniqueIds.Free;
     end;
@@ -176,7 +176,7 @@ begin
       LThreads[LIndex].Free;
     end;
 
-    Assert.AreEqual(0, LErrors.Count, 'Concurrent settings read should not raise errors');
+    Assert.AreEqual(0, Integer(LErrors.Count), 'Concurrent settings read should not raise errors');
   finally
     LLock.Free;
     LErrors.Free;

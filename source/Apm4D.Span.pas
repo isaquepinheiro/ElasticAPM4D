@@ -1,4 +1,4 @@
-﻿{ ******************************************************* }
+{ ******************************************************* }
 { }
 { Delphi Elastic Apm Agent }
 { }
@@ -35,8 +35,9 @@ type
     FType: string;
     Ftimestamp: Int64;
     Foutcome: string;
+    FStackTracerFactory: TStackTracerFactory;
   public
-    constructor Create(const ATraceId, ATransactionId, AParentId: string);
+    constructor Create(const ATraceId, ATransactionId, AParentId: string; const AStackTracerFactory: TStackTracerFactory);
     destructor Destroy; override;
 
     function ToJsonString: string;
@@ -73,14 +74,15 @@ implementation
 { TSpan }
 
 uses
-  Apm4D.Settings, Apm4D.Share.Stacktrace.Jcl, System.SysUtils, System.DateUtils, Apm4D.Share.Uuid, Apm4D.Share.TimestampEpoch;
+  Apm4D.Share.Stacktrace.Jcl, System.SysUtils, System.DateUtils, Apm4D.Share.Uuid, Apm4D.Share.TimestampEpoch;
 
-constructor TSpan.Create(const ATraceId, ATransactionId, AParentId: string);
+constructor TSpan.Create(const ATraceId, ATransactionId, AParentId: string; const AStackTracerFactory: TStackTracerFactory);
 begin
   FId := TUUid.Get64b;
   FTrace_id := ATraceId;
   FTransaction_id := ATransactionId;
   FParent_id := AParentId;
+  FStackTracerFactory := AStackTracerFactory;
   FAction := '';
   FSubtype := '';
   FSync := true;
@@ -91,10 +93,10 @@ end;
 
 destructor TSpan.Destroy;
 var
-  Stacktrace: TStacktrace;
+  LStacktrace: TStacktrace;
 begin
-  for Stacktrace in FStacktrace do
-    Stacktrace.Free;
+  for LStacktrace in FStacktrace do
+    LStacktrace.Free;
   FreeAndNil(FContext);
   inherited;
 end;
@@ -124,21 +126,25 @@ end;
 
 procedure TSpan.ToEnd;
 var
-  StackTrace: TStackTracer;
+  LStackTrace: TStackTracer;
 begin
   if FIsPaused then
     UnPause;
   // FStacktrace := TStacktraceJCL.Get;
   FDuration := MilliSecondsBetween(now, FStartDate) - FPausedDuration;
 
-  StackTrace := TApm4DSettings.CreateStackTracer;
+  LStackTrace := nil;
+  if Assigned(FStackTracerFactory) then
+    LStackTrace := FStackTracerFactory();
+
   try
-    if assigned(StackTrace) then
+    if Assigned(LStackTrace) then
     begin
-      FStacktrace := StackTrace.Get;
+      FStacktrace := LStackTrace.Get;
     end;
   finally
-    StackTrace.Free;
+    if Assigned(LStackTrace) then
+      LStackTrace.Free;
   end;
   // Set default outcome if not already set
   if Foutcome.IsEmpty then

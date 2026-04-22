@@ -19,7 +19,6 @@ type
   private const
     MAX_FRAMES = 15;
   private
-    FStackTrace: TArray<TStacktrace>;
     class var FRegExUnit1: TRegEx;
     class var FRegExUnit2: TRegEx;
     class var FRegExLine: TRegEx;
@@ -27,15 +26,15 @@ type
     class var FRegExFunction2: TRegEx;
   protected
     function GetStackList: TStringList; virtual;
+    function IsValidStacktrace(const AStr: string): Boolean;
     function IsIgnoreUnit(const AUnitName: string): Boolean;
     function ExtractValue(const AStr: string; const ARegEX: TRegEx): string;
     function GetUnitName(const AStr: string): string;
     function GetLine(const AStr: string): Integer;
     function GetFunctionName(const AStr: string): string;
   public
-    constructor Create;
+    constructor Create; override;
     class constructor Create;
-    function Get: TArray<TStacktrace>; override;
     function GetCulprit: string; override;
   end;
 
@@ -51,11 +50,11 @@ uses
 
 class constructor TStacktraceMadExcept.Create;
 begin
-  FRegExUnit1 := TRegEx.Create('\s+([a-zA-Z0-9_]+\.pas)\s+', [roCompiled]);
+  FRegExUnit1 := TRegEx.Create('\s+([^\s]+\.pas)\s+', [roCompiled]);
   FRegExUnit2 := TRegEx.Create('\s+([a-zA-Z0-9_]+)\s+\d+\s+', [roCompiled]);
   FRegExLine := TRegEx.Create('\s+(\d+)\s+', [roCompiled]);
-  FRegExFunction1 := TRegEx.Create('([a-zA-Z0-9_]+\.[a-zA-Z0-9_]+)$', [roCompiled]);
-  FRegExFunction2 := TRegEx.Create('([a-zA-Z0-9_]+)$', [roCompiled]);
+  FRegExFunction1 := TRegEx.Create('([^\s]+\.[^\s]+)$', [roCompiled]);
+  FRegExFunction2 := TRegEx.Create('([^\s]+)$', [roCompiled]);
 end;
 
 constructor TStacktraceMadExcept.Create;
@@ -74,7 +73,7 @@ begin
       if LFrameCount >= MAX_FRAMES then
         Break;
 
-      if LStackList.Strings[LLineIndex].Trim.IsEmpty then
+      if LStackList.Strings[LLineIndex].Trim.IsEmpty or (not IsValidStacktrace(LStackList.Strings[LLineIndex])) then
         Continue;
 
       LStacktrace := TStacktrace.Create;
@@ -119,10 +118,6 @@ begin
   Result := '';
 end;
 
-function TStacktraceMadExcept.Get: TArray<TStacktrace>;
-begin
-  Result := FStackTrace;
-end;
 
 function TStacktraceMadExcept.GetCulprit: string;
 var
@@ -186,6 +181,13 @@ begin
     if AUnitName.ToLower.StartsWith(LCurrent.ToLower) then
       Exit(True);
   end;
+end;
+
+function TStacktraceMadExcept.IsValidStacktrace(const AStr: string): Boolean;
+begin
+  // Basic validation for MadExcept: should have an address or unit/line pattern
+  // Usually starts with an address like 004bd967
+  Result := TRegEx.IsMatch(AStr, '^[0-9a-fA-F]{8}');
 end;
 
 end.

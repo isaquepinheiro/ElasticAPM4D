@@ -1,4 +1,4 @@
-﻿{*******************************************************}
+{*******************************************************}
 {                                                       }
 {             Delphi Elastic Apm Agent                  }
 {                                                       }
@@ -26,8 +26,9 @@ type
     FTransaction_id: String;
     FTimestamp: Int64;
     Fcontext: TContext;
+    FStackTracer: TStackTracer;
   public
-    constructor Create(const ATraceId, ATransactionId, AParentId: string);
+    constructor Create(const ATraceId, ATransactionId, AParentId: string; const AStackTracerFactory: TStackTracerFactory);
     destructor Destroy; override;
 
     function ToJsonString: string;
@@ -48,13 +49,11 @@ type
 implementation
 
 uses
-  System.SysUtils, Apm4D.Share.Uuid, Apm4D.Share.TimestampEpoch, Apm4D.Settings;
+  System.SysUtils, Apm4D.Share.Uuid, Apm4D.Share.TimestampEpoch;
 
 { TError }
 
-constructor TError.Create(const ATraceId, ATransactionId, AParentId: string);
-var 
-  StackTrace: TStackTracer;
+constructor TError.Create(const ATraceId, ATransactionId, AParentId: string; const AStackTracerFactory: TStackTracerFactory);
 begin
   FId := TUUid.Get128b;
   FException := TErrorException.Create;
@@ -64,15 +63,15 @@ begin
   FTransaction_id := ATransactionId;
   FParent_id := AParentId;
   FCulprit := '';
-  StackTrace := TApm4DSettings.CreateStackTracer;
-  try
-  if assigned(StackTrace) then
+  
+  FStackTracer := nil;
+  if Assigned(AStackTracerFactory) then
+    FStackTracer := AStackTracerFactory();
+
+  if Assigned(FStackTracer) then
   begin
-    FException.Stacktrace := StackTrace.Get;
-    FCulprit := StackTrace.GetCulprit
-  end; 
-  finally
-    StackTrace.Free;
+    FException.Stacktrace := FStackTracer.Get;
+    FCulprit := FStackTracer.GetCulprit;
   end;
 end;
 
@@ -80,6 +79,8 @@ destructor TError.Destroy;
 begin
   FException.Free;
   Fcontext.Free;
+  if Assigned(FStackTracer) then
+    FStackTracer.Free;
   inherited;
 end;
 
