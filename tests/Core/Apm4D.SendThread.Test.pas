@@ -75,8 +75,8 @@ begin
     LThread.Start;
     LThread.WaitFor;
     
-    Assert.AreEqual(1, FMock.Calls.Count);
-    Assert.AreEqual(0, LThread.TotalErrors);
+    Assert.AreEqual<Integer>(1, FMock.Calls.Count);
+    Assert.AreEqual<Integer>(0, LThread.TotalErrors);
   finally
     LThread.Free;
   end;
@@ -99,8 +99,8 @@ begin
     LThread.Start;
     LThread.WaitFor;
     
-    Assert.AreEqual(2, FMock.Calls.Count);
-    Assert.AreEqual(1, LThread.TotalErrors);
+    Assert.AreEqual<Integer>(2, FMock.Calls.Count);
+    Assert.AreEqual<Integer>(1, LThread.TotalErrors);
   finally
     LThread.Free;
   end;
@@ -122,9 +122,9 @@ begin
     LThread.Start;
     LThread.WaitFor;
     
-    Assert.AreEqual(1, FMock.Calls.Count);
-    Assert.AreEqual(1, LThread.TotalErrors);
-    Assert.AreEqual(1, LThread.ConnectionError);
+    Assert.AreEqual<Integer>(1, FMock.Calls.Count);
+    Assert.AreEqual<Integer>(1, LThread.TotalErrors);
+    Assert.AreEqual<Integer>(1, LThread.ConnectionError);
   finally
     LThread.Free;
   end;

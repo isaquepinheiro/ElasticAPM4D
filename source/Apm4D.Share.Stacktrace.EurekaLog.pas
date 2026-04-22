@@ -19,7 +19,6 @@ type
   private const
     MAX_FRAMES = 15;
   private
-    FStackTrace: TArray<TStacktrace>;
     class var FRegExFunction: TRegEx;
     class var FRegExLine: TRegEx;
     class var FRegExUnit: TRegEx;
@@ -31,9 +30,8 @@ type
     function GetLine(const AStr: string): Integer;
     function GetFunctionName(const AStr: string): string;
   public
-    constructor Create;
+    constructor Create; override;
     class constructor Create;
-    function Get: TArray<TStacktrace>; override;
     function GetCulprit: string; override;
   end;
 
@@ -61,6 +59,7 @@ var
   LLineIndex: Integer;
   LFrameCount: Integer;
 begin
+  inherited Create;
   FStackTrace := [];
   LFrameCount := 0;
   LStackList := GetStackList;
@@ -115,10 +114,6 @@ begin
   Result := '';
 end;
 
-function TStacktraceEurekaLog.Get: TArray<TStacktrace>;
-begin
-  Result := FStackTrace;
-end;
 
 function TStacktraceEurekaLog.GetCulprit: string;
 var

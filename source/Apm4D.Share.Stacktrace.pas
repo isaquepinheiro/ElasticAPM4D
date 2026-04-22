@@ -38,13 +38,38 @@ type
   end;
 
   TStackTracer = class abstract
+  protected
+     FStackTrace: TArray<TStacktrace>;
   public
-     function Get: TArray<TStacktrace>; virtual; abstract;
+     constructor Create; virtual;
+     destructor Destroy; override;
+     function Get: TArray<TStacktrace>; virtual;
      function GetCulprit: string; virtual; abstract;
   end;
 
   TStackTracerClass = class of TStackTracer;
 
 implementation
+
+{ TStackTracer }
+
+constructor TStackTracer.Create;
+begin
+  // Base initialization if needed
+end;
+
+destructor TStackTracer.Destroy;
+var
+  LStack: TStacktrace;
+begin
+  for LStack in FStackTrace do
+    LStack.Free;
+  inherited;
+end;
+
+function TStackTracer.Get: TArray<TStacktrace>;
+begin
+  Result := FStackTrace;
+end;
 
 end.

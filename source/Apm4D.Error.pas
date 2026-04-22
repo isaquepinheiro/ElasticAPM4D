@@ -1,4 +1,4 @@
-﻿{*******************************************************}
+{*******************************************************}
 {                                                       }
 {             Delphi Elastic Apm Agent                  }
 {                                                       }
@@ -26,6 +26,7 @@ type
     FTransaction_id: String;
     FTimestamp: Int64;
     Fcontext: TContext;
+    FStackTracer: TStackTracer;
   public
     constructor Create(const ATraceId, ATransactionId, AParentId: string);
     destructor Destroy; override;
@@ -64,15 +65,11 @@ begin
   FTransaction_id := ATransactionId;
   FParent_id := AParentId;
   FCulprit := '';
-  StackTrace := TApm4DSettings.CreateStackTracer;
-  try
-  if assigned(StackTrace) then
+  FStackTracer := TApm4DSettings.CreateStackTracer;
+  if assigned(FStackTracer) then
   begin
-    FException.Stacktrace := StackTrace.Get;
-    FCulprit := StackTrace.GetCulprit
-  end; 
-  finally
-    StackTrace.Free;
+    FException.Stacktrace := FStackTracer.Get;
+    FCulprit := FStackTracer.GetCulprit;
   end;
 end;
 
@@ -80,6 +77,8 @@ destructor TError.Destroy;
 begin
   FException.Free;
   Fcontext.Free;
+  if Assigned(FStackTracer) then
+    FStackTracer.Free;
   inherited;
 end;
 

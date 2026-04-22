@@ -144,7 +144,7 @@ begin
     LMock.Add('004bd967 +057 MyApp.exe Unit1.pas 32 TForm1.Button1Click');
     LTracer := TTestMadExcept.Create(LMock);
     try
-      Assert.AreEqual(1, Length(LTracer.Get));
+      Assert.AreEqual(1, Integer(Length(LTracer.Get)));
       LFrame := LTracer.Get[0];
       Assert.AreEqual(32, LFrame.lineno);
       Assert.AreEqual('Unit1.pas', LFrame.filename);
@@ -169,7 +169,7 @@ begin
     LMock.Add('Unit1.pas 10 TForm1.ButtonClick line 10');
     LTracer := TTestEurekaLog.Create(LMock);
     try
-      Assert.AreEqual(1, Length(LTracer.Get));
+      Assert.AreEqual(1, Integer(Length(LTracer.Get)));
       LFrame := LTracer.Get[0];
       Assert.AreEqual(10, LFrame.lineno);
       Assert.AreEqual('Unit1.pas', LFrame.filename);
@@ -194,7 +194,7 @@ begin
       
     LTracer := TTestMadExcept.Create(LMock);
     try
-      Assert.AreEqual(15, Length(LTracer.Get), 'MadExcept should limit to 15 frames');
+      Assert.AreEqual(15, Integer(Length(LTracer.Get)), 'MadExcept should limit to 15 frames');
     finally
       LTracer.Free;
     end;

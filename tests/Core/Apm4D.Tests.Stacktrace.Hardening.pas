@@ -61,7 +61,15 @@ type
     [Test]
     procedure Should_Handle_Malformed_EurekaLog_Frames;
     [Test]
+    procedure Should_Handle_Recursive_Calls_Gracefully;
+    [Test]
+    procedure Should_Not_Leak_Memory_During_Stack_Capture;
+    [Test]
     procedure Should_Filter_Internal_Apm4D_Units;
+    [Test]
+    procedure Should_Identify_Culprit_At_Bottom_Of_Stack;
+    [Test]
+    procedure Should_Parse_Unicode_Function_Names;
   end;
 
 implementation
@@ -166,12 +174,12 @@ begin
   LMock := TStringList.Create;
   try
     for LFor := 1 to 50 do
-      LMock.Add(Format('004000%d MyApp.exe MyUnit.pas %d MyDeepFunction%d', [LFor, LFor, LFor]));
+      LMock.Add(Format('%8.8x MyApp.exe MyUnit.pas %d MyDeepFunction%d', [LFor + $400000, LFor, LFor]));
       
     LTracer := TTestMadExceptHardening.Create(LMock);
     try
       // Should limit to MAX_FRAMES (15) and not crash
-      Assert.AreEqual(15, Length(LTracer.Get));
+      Assert.AreEqual(15, Integer(Length(LTracer.Get)));
       Assert.AreEqual('MyDeepFunction1', LTracer.GetCulprit);
     finally
       LTracer.Free;
@@ -196,7 +204,7 @@ begin
     LTracer := TTestJclHardening.Create(LMock);
     try
       // Should result in empty stack but not crash
-      Assert.AreEqual(0, Length(LTracer.Get));
+      Assert.AreEqual(0, Integer(Length(LTracer.Get)));
       Assert.AreEqual('unknown', LTracer.GetCulprit);
     finally
       LTracer.Free;
@@ -221,7 +229,7 @@ begin
     LTracer := TTestMadExceptHardening.Create(LMock);
     try
       LStack := LTracer.Get;
-      Assert.AreEqual(2, Length(LStack));
+      Assert.AreEqual(2, Integer(Length(LStack)));
       
       Assert.AreEqual('Unit1.pas', LStack[0].filename);
       Assert.AreEqual(32, LStack[0].lineno);
@@ -252,7 +260,7 @@ begin
       
     LJcl := TTestJclHardening.Create(LMock);
     try
-      Assert.AreEqual(15, Length(LJcl.Get), 'JCL limit');
+      Assert.AreEqual(15, Integer(Length(LJcl.Get)), 'JCL limit');
     finally
       LJcl.Free;
     end;
@@ -263,7 +271,7 @@ begin
       
     LMad := TTestMadExceptHardening.Create(LMock);
     try
-      Assert.AreEqual(15, Length(LMad.Get), 'MadExcept limit');
+      Assert.AreEqual(15, Integer(Length(LMad.Get)), 'MadExcept limit');
     finally
       LMad.Free;
     end;
@@ -274,7 +282,7 @@ begin
       
     LEur := TTestEurekaLogHardening.Create(LMock);
     try
-      Assert.AreEqual(15, Length(LEur.Get), 'EurekaLog limit');
+      Assert.AreEqual(15, Integer(Length(LEur.Get)), 'EurekaLog limit');
     finally
       LEur.Free;
     end;
@@ -307,6 +315,67 @@ begin
   end;
 end;
 
+procedure TStacktraceHardeningTests.Should_Handle_Recursive_Calls_Gracefully;
+var
+  LMock: TStringList;
+  LTracer: TTestMadExceptHardening;
+  LFor: Integer;
+begin
+  LMock := TStringList.Create;
+  try
+    // Simulate deep recursion (50 identical frames)
+    for LFor := 1 to 50 do
+      LMock.Add('00401234 +000 MyApp.exe Recursive.pas 10 TRecursive.Execute');
+      
+    LTracer := TTestMadExceptHardening.Create(LMock);
+    try
+      // Should limit to MAX_FRAMES (15)
+      Assert.AreEqual(15, Integer(Length(LTracer.Get)), 'Should limit recursive frames');
+      // All frames should be parsed correctly
+      Assert.AreEqual('TRecursive.Execute', LTracer.Get[0].&function);
+      Assert.AreEqual('TRecursive.Execute', LTracer.Get[14].&function);
+    finally
+      LTracer.Free;
+    end;
+  finally
+    LMock.Free;
+  end;
+end;
+
+procedure TStacktraceHardeningTests.Should_Not_Leak_Memory_During_Stack_Capture;
+var
+  LInitialCount: Integer;
+  LFinalCount: Integer;
+  LMock: TStringList;
+  LTracer: TTestMadExceptHardening;
+  LFor: Integer;
+begin
+  LMock := TStringList.Create;
+  try
+    LMock.Add('004bd967 +057 MyApp.exe Unit1.pas 32 TForm1.Button1Click');
+    LMock.Add('004bca12 +012 MyApp.exe Business.pas 150 TProcessor.ProcessData');
+    
+    // Warm up to initialize any static variables or caches (like Regex)
+    LTracer := TTestMadExceptHardening.Create(LMock);
+    Assert.AreEqual(2, Integer(Length(LTracer.Get)), 'Tracer should have 2 frames');
+    LTracer.Free;
+
+    LInitialCount := GetHeapStatus.TotalAllocated;
+    
+    for LFor := 1 to 100 do
+    begin
+      LTracer := TTestMadExceptHardening.Create(LMock);
+      LTracer.Free;
+    end;
+    
+    LFinalCount := GetHeapStatus.TotalAllocated;
+    
+    Assert.IsTrue(LFinalCount = LInitialCount, 'Memory leak detected: TotalAllocated increased');
+  finally
+    LMock.Free;
+  end;
+end;
+
 procedure TStacktraceHardeningTests.Should_Filter_Internal_Apm4D_Units;
 var
   LMock: TStringList;
@@ -322,8 +391,57 @@ begin
     LTracer := TTestJclHardening.Create(LMock);
     try
       // All Apm4D.* units should be filtered out
-      Assert.AreEqual(1, Length(LTracer.Get));
+      Assert.AreEqual(1, Integer(Length(LTracer.Get)));
       Assert.AreEqual('UserUnit.TUser.Test', LTracer.Get[0].&function);
+    finally
+      LTracer.Free;
+    end;
+  finally
+    LMock.Free;
+  end;
+end;
+
+procedure TStacktraceHardeningTests.Should_Identify_Culprit_At_Bottom_Of_Stack;
+var
+  LMock: TStringList;
+  LTracer: TTestMadExceptHardening;
+begin
+  LMock := TStringList.Create;
+  try
+    // Only one valid frame at the very bottom (last line)
+    LMock.Add('Random noise');
+    LMock.Add('More garbage');
+    LMock.Add('004bd967 +057 MyApp.exe Culprit.pas 32 TCulprit.Handle');
+    
+    LTracer := TTestMadExceptHardening.Create(LMock);
+    try
+      Assert.AreEqual(1, Integer(Length(LTracer.Get)));
+      Assert.AreEqual('TCulprit.Handle', LTracer.GetCulprit);
+    finally
+      LTracer.Free;
+    end;
+  finally
+    LMock.Free;
+  end;
+end;
+
+procedure TStacktraceHardeningTests.Should_Parse_Unicode_Function_Names;
+var
+  LMock: TStringList;
+  LTracer: TTestMadExceptHardening;
+begin
+  LMock := TStringList.Create;
+  try
+    // Unicode function name (if supported by the regex)
+    LMock.Add('004bd967 +057 MyApp.exe Unit1.pas 32 TForm1.Método_Com_Acentuação');
+    
+    LTracer := TTestMadExceptHardening.Create(LMock);
+    try
+      Assert.AreEqual(1, Integer(Length(LTracer.Get)));
+      // TRegEx used in MadExcept: ([a-zA-Z0-9_]+\.[a-zA-Z0-9_]+)$
+      // This regex does NOT support Unicode accents.
+      // So this test might fail, which is good for hardening.
+      Assert.AreEqual('TForm1.Método_Com_Acentuação', LTracer.Get[0].&function);
     finally
       LTracer.Free;
     end;
