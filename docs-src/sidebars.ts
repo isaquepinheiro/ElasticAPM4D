@@ -35,7 +35,19 @@ const sidebars: SidebarsConfig = {
         {
           type: 'category',
           label: 'Reference',
-          items: ['elasticapm4d/reference/api'],
+          items: [
+            'elasticapm4d/reference/api',
+            'elasticapm4d/reference/configuration',
+          ],
+        },
+        {
+          type: 'category',
+          label: 'Guides',
+          items: [
+            'elasticapm4d/guides/stacktrace-providers',
+            'elasticapm4d/guides/custom-transport',
+            'elasticapm4d/guides/local-setup',
+          ],
         },
         {
           type: 'category',
@@ -50,6 +62,7 @@ const sidebars: SidebarsConfig = {
             'elasticapm4d/troubleshooting/common-errors',
           ],
         },
+
       ],
     },
   ],

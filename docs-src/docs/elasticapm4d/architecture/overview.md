@@ -13,12 +13,14 @@ ElasticAPM4D is a Delphi library layer between application instrumentation calls
 - **TApm4DSettings singleton:** global runtime configuration and feature toggles.
 - **TDataController threadvar context:** per-thread transaction state.
 - **TApm4DSerializer:** JSON and NDJSON formatting via REST.Json.
-- **TQueueSingleton + TSendThread:** queue and asynchronous transport pipeline.
+- **IApm4DHttpClient:** abstraction for HTTP delivery (Indy implementation included by default).
+- **TQueueSingleton + TSendThread:** queue and asynchronous transport pipeline using the HTTP abstraction.
 - **TStacktraceEngine:** abstraction for pluggable stacktrace providers (MadExcept, EurekaLog, JCL).
 - **Interceptor units:** optional automatic instrumentation for VCL and data access flows.
 
 ## Extensibility
 
-- Custom stacktrace providers through TApm4DSettings.AddStackTracer.
-- Distributed tracing continuation with StartTransaction(name, type, traceId).
-- Additional instrumentation can be added through interceptor registration APIs.
+- **Stacktrace Providers:** Native support for MadExcept, EurekaLog, and JCL, plus custom providers via `TApm4DSettings.AddStackTracer`.
+- **HTTP Transport:** Swap the default Indy transport by providing a custom `IApm4DHttpClient` factory.
+- **Distributed Tracing:** Continuation with `StartTransaction(name, type, traceId)`.
+- **Interceptors:** Registration APIs for custom instrumentation logic.

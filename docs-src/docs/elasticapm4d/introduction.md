@@ -15,6 +15,13 @@ The project uses a facade-first model. Application code calls TApm4D and TApm4DS
 - **Metricset:** periodic runtime metrics such as CPU and memory.
 - **Trace context:** distributed tracing continuation with elastic-apm-traceparent.
 
+## Features (v1.0.0)
+
+- **Third-party Stacktrace Support:** Built-in integration with **MadExcept**, **EurekaLog**, and **JEDI-JCL** for detailed error diagnostics.
+- **Flexible Transport:** Decoupled HTTP transport layer allowing custom client implementations.
+- **Structured Elastic APM intake v2 output.**
+- **Thread-aware transaction context with asynchronous delivery.**
+
 ## Target audience
 
 This documentation is for Delphi developers and maintainers who need to instrument applications, validate behavior with tests, and troubleshoot runtime telemetry flow.
@@ -22,5 +29,6 @@ This documentation is for Delphi developers and maintainers who need to instrume
 ## Why use it
 
 - Native Delphi instrumentation with low adoption friction.
-- Structured Elastic APM intake v2 output.
-- Thread-aware transaction context with asynchronous delivery.
+- High-fidelity error reporting with stacktrace provider support.
+- Performance-oriented asynchronous delivery architecture.
+

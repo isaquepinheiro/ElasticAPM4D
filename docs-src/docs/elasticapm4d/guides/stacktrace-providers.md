@@ -3,30 +3,50 @@ displayed_sidebar: elasticapm4dSidebar
 title: Stacktrace Providers
 ---
 
-# Stacktrace Providers
-
-ElasticAPM4D includes a flexible stacktrace capture system that integrates with popular Delphi debugging tools. This allows the agent to attach detailed source code context (file, line, and function) to captured error events.
-
-## Automatic Detection
-
-The agent is designed to automatically detect and register the best available provider at compile-time. You don't need to manually register providers in your code; simply add the appropriate conditional directive to your project options.
-
-### Detection Priority
-
-If multiple providers are available or multiple directives are defined, the agent follows this priority:
-
-1. **MadExcept** (highest)
-2. **EurekaLog**
-3. **JEDI JCL**
-4. **Default** (minimal stacktrace using native RTL functions)
+Detailed stacktraces are essential for diagnosing errors in production. ElasticAPM4D includes a flexible stacktrace capture system that integrates with popular Delphi debugging tools. This allows the agent to attach detailed source code context (file, line, and function) to captured error events.
 
 ## Supported Providers
 
-| Provider | Conditional Directive | Requirement |
-|----------|-----------------------|-------------|
-| **MadExcept** | `madExcept` | [MadExcept](http://www.madshi.net/) installed and active in the project. |
-| **EurekaLog** | `EUREKALOG` | [EurekaLog](https://www.eurekalog.com/) installed and active in the project. |
-| **JEDI JCL** | `jcl` | [JEDI JCL](https://github.com/project-jedi/jcl) installed and configured with debug symbols. |
+| Provider | Project Define | Requirement |
+|----------|----------------|-------------|
+| **MadExcept** | `madExcept` | MadExcept 4+ installed. Uses `MadStackTrace` unit. |
+| **EurekaLog** | `EUREKALOG` | EurekaLog 7+ installed. Uses `ExceptionLog7` and `ECallStack` units. |
+| **JEDI-JCL** | `jcl` | JCL Debug units and stack tracking enabled. Uses `JclDebug` unit. |
+| **Default** | None | Uses internal Delphi stacktrace (requires debug symbols). |
+
+## How to Enable
+
+### 1. Add the Conditional Define
+
+To enable a provider, add the corresponding define to your project's **Conditional Defines** (Project > Options > Delphi Compiler):
+
+- For MadExcept: `madExcept`
+- For EurekaLog: `EUREKALOG`
+- For JCL: `jcl`
+
+### 2. Automatic Detection
+
+By default, `TApm4DSettings.StacktraceProvider` is set to `spAutomatic`. In this mode, the agent selects the first available provider in the following order:
+
+1. MadExcept
+2. EurekaLog
+3. JCL
+4. None (Fallback to default)
+
+### 3. Manual Selection
+
+You can force a specific provider at runtime:
+
+```delphi
+uses
+  Apm4D.Settings,
+  Apm4D.Share.Types;
+
+begin
+  TApm4DSettings.SetStacktraceProvider(spEurekaLog);
+  TApm4DSettings.Activate;
+end;
+```
 
 ## Performance Optimization (Regex Caching)
 
@@ -35,28 +55,29 @@ Starting from version 1.0.0 (ESP-011), the stacktrace providers utilize **cached
 In previous versions, regex patterns used for parsing stacktrace lines were compiled on every exception capture. Now, these patterns are compiled once during the class initialization (using class constructors) and reused across all capture events.
 
 This optimization results in:
-- Reduced CPU overhead during error reporting.
-- Significant reduction in heap allocations.
-- Faster response times for the application when an exception occurs.
+- **Reduced CPU overhead** during error reporting.
+- **Significant reduction in heap allocations** (no redundant regex object creation).
+- **Faster response times** for the application when an exception occurs.
 
-## Manual Implementation
+## Custom Providers
 
-If you want to implement your own stacktrace provider, you can inherit from `TStackTracer` found in `Apm4D.Share.Stacktrace.pas` and register it using `TApm4DSettings.AddStackTracer`.
+If you use a different tool or want to implement custom stacktrace logic, you can create a subclass of `TStackTracer` (found in `Apm4D.Share.Stacktrace.pas`) and register it:
 
 ```delphi
 type
-  TCustomStackTracer = class(TStackTracer)
+  TMyStackTracer = class(TStackTracer)
   public
     function Get: TArray<TStacktrace>; override;
     function GetCulprit: string; override;
   end;
 
-// Registration
-TApm4DSettings.AddStackTracer(TCustomStackTracer.Create);
+begin
+  TApm4DSettings.AddStackTracer(TMyStackTracer.Create);
+end;
 ```
 
 ## Best Practices
 
 - **Debug Symbols:** For JCL to work correctly, ensure your project is configured to generate a `.map` file or includes JEDI debug information.
 - **Production Use:** We recommend using MadExcept or EurekaLog for production environments as they provide the most reliable and detailed stacktraces with minimal overhead.
-- **Binary Size:** Enabling these providers will increase your binary size due to the inclusion of debug metadata.
+- **Limits:** The agent respects a limit of **15 frames** (defined by `MAX_FRAMES`) to keep payloads small and efficient.
