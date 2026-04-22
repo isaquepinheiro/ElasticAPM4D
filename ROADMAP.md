@@ -2,7 +2,7 @@
 
 > Agente de Application Performance Monitoring nativo para Delphi integrado ao Elastic APM.
 
-**Última atualização:** 2026-04-22 15:30
+**Última atualização:** 2026-04-22 17:35
 
 ---
 
@@ -50,7 +50,8 @@
 - [x] Suporte para MadExcept e EurekaLog — delivered 2026-04-21
 - [x] Interceptors automáticos (UI, DataSet, DBConnection) — delivered v1.1.0-dev 2026-04-22
 - [x] Otimização de Regex nos providers de stacktrace — delivered v1.1.0-dev 2026-04-22
-- [ ] (Awaiting next priority)
+- [x] Blindagem da captura de exceções Delphi com stacktrace — delivered v1.1.0-dev 2026-04-22
+- [ ] Decouple TApm4DSettings singleton from core domain (TSpan, TError)
 
 ---
 
@@ -80,5 +81,6 @@ Backlog operacional sincronizado com este roadmap:
 Prioridade imediata para continuidade da trilha atual de testes:
 
 1. [x] [DEBT] Atualizar documentação README (PT/EN) para MadExcept e EurekaLog (#9). — delivered 2026-04-22
-2. Nao-regressao: blindagem da captura de excecoes Delphi com stacktrace.
-3. Atualizar os checkboxes das fases apos fechamento da rodada de testes.
+2. [x] Nao-regressao: blindagem da captura de excecoes Delphi com stacktrace. — delivered 2026-04-22
+3. Decouple TApm4DSettings singleton from core domain (TSpan, TError).
+

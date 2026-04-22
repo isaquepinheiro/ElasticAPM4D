@@ -84,7 +84,7 @@ var
   LJsonString: string;
   LJsonValue: TJSONValue;
 begin
-  LSpan := TSpan.Create('trace123', 'trans123', 'parent123');
+  LSpan := TSpan.Create('trace123', 'trans123', 'parent123', nil);
   try
     LSpan.Start('TestSpan', 'db');
     LSpan.ToEnd;
@@ -114,7 +114,7 @@ var
   LJsonString: string;
   LJsonValue: TJSONValue;
 begin
-  LError := TError.Create('trace123', 'trans123', 'parent123');
+  LError := TError.Create('trace123', 'trans123', 'parent123', nil);
   try
     LError.Exception.&Message := 'Test Exception';
     LError.Exception.&Type := 'Exception';
@@ -194,7 +194,7 @@ var
   LRoot: TJSONObject;
   LSpanObj: TJSONObject;
 begin
-  LSpan := TSpan.Create('trace_aaa', 'trans_bbb', 'parent_ccc');
+  LSpan := TSpan.Create('trace_aaa', 'trans_bbb', 'parent_ccc', nil);
   try
     LSpan.Start('RequiredFieldsSpan', 'db');
     LSpan.ToEnd;
@@ -232,7 +232,7 @@ var
   LErrorObj: TJSONObject;
   LExceptionObj: TJSONObject;
 begin
-  LError := TError.Create('trace_x', 'trans_y', 'parent_z');
+  LError := TError.Create('trace_x', 'trans_y', 'parent_z', nil);
   try
     LError.Exception.&Message := 'Required field test';
     LError.Exception.&Type := 'ETest';

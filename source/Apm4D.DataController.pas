@@ -1,4 +1,4 @@
-﻿{ ******************************************************* }
+{ ******************************************************* }
 { }
 { Delphi Elastic Apm Agent }
 { }
@@ -11,7 +11,7 @@ interface
 
 uses
   System.SysUtils, System.Classes, System.Generics.Collections, Apm4D.Metadata, Apm4D.Span, Apm4D.Error, Apm4D.Transaction,
-  Apm4D.Log;
+  Apm4D.Log, Apm4D.Share.Stacktrace;
 
 type
   TDataController = class
@@ -30,7 +30,7 @@ type
     function GetHeader: string;
     procedure SetHeader(const Value: string);
   public
-    constructor Create;
+    constructor Create(const AStackTracerFactory: TStackTracerFactory);
     destructor Destroy; override;
 
     procedure ToQueue;
@@ -54,7 +54,7 @@ implementation
 uses
   System.DateUtils, StrUtils, Apm4D.Settings, Apm4D.QueueSingleton, Apm4D.Metricset, System.Threading;
 
-constructor TDataController.Create;
+constructor TDataController.Create(const AStackTracerFactory: TStackTracerFactory);
 begin
   FMetadata := TMetadata.Create;
   FTransaction := TTransaction.Create;
@@ -63,6 +63,7 @@ begin
   FErrorList := TObjectList<TError>.Create;
   FLogList := TObjectList<TAPMLog>.Create;
   FHeader := '';
+  FTransaction.StackTracerFactory := AStackTracerFactory;
 end;
 
 function TDataController.CurrentSpan: TSpan;
@@ -74,11 +75,11 @@ begin
 end;
 
 procedure TDataController.PauseAllOpenedSpans;
-var 
-  I: Integer;
+var
+  LI: Integer;
 begin
-  for I := 0 to FOpenSpanStack.Count - 1 do
-    TSpan(FOpenSpanStack.Items[I]).Pause;
+  for LI := 0 to FOpenSpanStack.Count - 1 do
+    TSpan(FOpenSpanStack.Items[LI]).Pause;
 end;
 
 destructor TDataController.Destroy;
@@ -99,19 +100,19 @@ end;
 
 function TDataController.StartSpan(const AName, AType: string): TSpan;
 var
-  TransactionPausedDuration: Int64;
+  LTransactionPausedDuration: Int64;
 begin
   if SpanIsOpened then
-    Result := TSpan.Create(CurrentSpan.trace_id, CurrentSpan.transaction_id, CurrentSpan.id)
+    Result := TSpan.Create(CurrentSpan.trace_id, CurrentSpan.transaction_id, CurrentSpan.id, FTransaction.StackTracerFactory)
   else
-    Result := TSpan.Create(FTransaction.trace_id, FTransaction.id, FTransaction.id);
+    Result := TSpan.Create(FTransaction.trace_id, FTransaction.id, FTransaction.id, FTransaction.StackTracerFactory);
 
   // Calcula a duração de pausa da Transaction até o momento
-  TransactionPausedDuration := FTransaction.GetPausedDuration;
+  LTransactionPausedDuration := FTransaction.GetPausedDuration;
   if FTransaction.IsPaused then
-    TransactionPausedDuration := TransactionPausedDuration + MilliSecondsBetween(now, FTransaction.GetPauseStartDate);
+    LTransactionPausedDuration := LTransactionPausedDuration + MilliSecondsBetween(now, FTransaction.GetPauseStartDate);
 
-  Result.Start(AName, AType, TransactionPausedDuration);
+  Result.Start(AName, AType, LTransactionPausedDuration);
 
   FSpanList.Add(Result);
   FOpenSpanStack.Add(Result);
@@ -137,85 +138,85 @@ end;
 
 procedure TDataController.ToQueue;
 var
-  MetadataJson, TransactionJson, SpansJson, ErrorsJson, LogsJson: string;
-  Tasks: array [0 .. 4] of ITask;
-  Value: Widestring;
+  LMetadataJson, LTransactionJson, LSpansJson, LErrorsJson, LLogsJson: string;
+  LTasks: array [0 .. 4] of ITask;
+  LValue: Widestring;
 begin
   if not TApm4DSettings.IsActive then
     exit;
 
   // Serialize objects in parallel for better performance
-  Tasks[0] := TTask.Create(
+  LTasks[0] := TTask.Create(
     procedure
     begin
-      MetadataJson := FMetadata.ToJsonString;
+      LMetadataJson := FMetadata.ToJsonString;
     end);
 
-  Tasks[1] := TTask.Create(
+  LTasks[1] := TTask.Create(
     procedure
     begin
-      TransactionJson := FTransaction.ToJsonString;
+      LTransactionJson := FTransaction.ToJsonString;
     end);
 
-  Tasks[2] := TTask.Create(
+  LTasks[2] := TTask.Create(
     procedure
     var
-      Span: TSpan;
+      LSpan: TSpan;
     begin
-      SpansJson := '';
+      LSpansJson := '';
       if Assigned(FSpanList) then
-        for Span in FSpanList do
-          if Span <> nil then
-            SpansJson := SpansJson + IfThen(not SpansJson.IsEmpty, XndJsonSeparator) + Span.ToJsonString;
+        for LSpan in FSpanList do
+          if LSpan <> nil then
+            LSpansJson := LSpansJson + IfThen(not LSpansJson.IsEmpty, XndJsonSeparator) + LSpan.ToJsonString;
     end);
 
-  Tasks[3] := TTask.Create(
+  LTasks[3] := TTask.Create(
     procedure
     var
-      Error: TError;
+      LError: TError;
     begin
-      ErrorsJson := '';
+      LErrorsJson := '';
       if Assigned(FErrorList) then
-        for Error in FErrorList do
-          if Error <> nil then
-            ErrorsJson := ErrorsJson + IfThen(not ErrorsJson.IsEmpty, XndJsonSeparator) + Error.ToJsonString;
+        for LError in FErrorList do
+          if LError <> nil then
+            LErrorsJson := LErrorsJson + IfThen(not LErrorsJson.IsEmpty, XndJsonSeparator) + LError.ToJsonString;
     end);
 
-  Tasks[4] := TTask.Create(
+  LTasks[4] := TTask.Create(
     procedure
     var
-      LogEntry: TAPMLog;
+      LLogEntry: TAPMLog;
     begin
-      LogsJson := '';
+      LLogsJson := '';
       if Assigned(FLogList) then
-        for LogEntry in FLogList do
-          if LogEntry <> nil then
-            LogsJson := LogsJson + IfThen(not LogsJson.IsEmpty, XndJsonSeparator) + LogEntry.ToJsonString;
+        for LLogEntry in FLogList do
+          if LLogEntry <> nil then
+            LLogsJson := LLogsJson + IfThen(not LLogsJson.IsEmpty, XndJsonSeparator) + LLogEntry.ToJsonString;
     end);
 
   // Start all tasks
-  for var Task in Tasks do
-    Task.Start;
+  for var LTask in LTasks do
+    LTask.Start;
 
   // Wait for all serializations to complete
-  TTask.WaitForAll(Tasks);
+  TTask.WaitForAll(LTasks);
 
   // Add serialized content in correct order
-  Value :=
-    MetadataJson + XndJsonSeparator + TransactionJson +
-    IfThen(not SpansJson.IsEmpty, XndJsonSeparator) + SpansJson +
-    IfThen(not ErrorsJson.IsEmpty, XndJsonSeparator) + ErrorsJson +
-    IfThen(not LogsJson.IsEmpty, XndJsonSeparator) + LogsJson;
+  LValue :=
+    LMetadataJson + XndJsonSeparator + LTransactionJson +
+    IfThen(not LSpansJson.IsEmpty, XndJsonSeparator) + LSpansJson +
+    IfThen(not LErrorsJson.IsEmpty, XndJsonSeparator) + LErrorsJson +
+    IfThen(not LLogsJson.IsEmpty, XndJsonSeparator) + LLogsJson;
 
   // Collect metrics (already parallel internally)
   TMetricSets.CollectAsync(
     procedure(AMetric: string)
     begin
       if not AMetric.IsEmpty then
-        Value := Value + XndJsonSeparator + AMetric;
+        LValue := LValue + XndJsonSeparator + AMetric;
     end);
 
-  TQueueSingleton.StackUp(Value, Header);
+  TQueueSingleton.StackUp(LValue, Header);
   FHeader := '';
 end;
 

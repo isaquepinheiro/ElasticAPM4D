@@ -80,7 +80,7 @@ procedure TTestError.Should_Create_With_Valid_Ids;
 var
   LError: TError;
 begin
-  LError := TError.Create('trace123', 'trans123', 'parent123');
+  LError := TError.Create('trace123', 'trans123', 'parent123', nil);
   try
     Assert.IsNotEmpty(LError.Id, 'Error ID should be generated');
     Assert.AreEqual('trace123', LError.Trace_id);
@@ -96,7 +96,7 @@ procedure TTestError.Should_Set_Exception_Message_And_Type;
 var
   LError: TError;
 begin
-  LError := TError.Create('trace', 'trans', 'parent');
+  LError := TError.Create('trace', 'trans', 'parent', nil);
   try
     LError.Exception.&Message := 'Division by zero';
     LError.Exception.&Type := 'EZeroDivide';
@@ -113,7 +113,7 @@ var
   LError: TError;
 begin
   // Sem StackTracer registrado: culprit e frames devem estar ausentes
-  LError := TError.Create('trace', 'trans', 'parent');
+  LError := TError.Create('trace', 'trans', 'parent', nil);
   try
     Assert.AreEqual('', LError.Culprit,
       'Culprit must be empty when no StackTracer is registered');
@@ -128,8 +128,11 @@ procedure TTestError.Should_Have_Culprit_When_StackTracer_Is_Registered;
 var
   LError: TError;
 begin
-  TApm4DSettings.AddStackTracer(TTestStackTracer);
-  LError := TError.Create('trace', 'trans', 'parent');
+  LError := TError.Create('trace', 'trans', 'parent',
+    function: TStackTracer
+    begin
+      Result := TTestStackTracer.Create;
+    end);
   try
     Assert.AreEqual('TMyClass.DoSomething', LError.Culprit,
       'Culprit must be populated from StackTracer when one is registered');
@@ -143,8 +146,11 @@ var
   LError: TError;
   LFrame: TStacktrace;
 begin
-  TApm4DSettings.AddStackTracer(TTestStackTracer);
-  LError := TError.Create('trace', 'trans', 'parent');
+  LError := TError.Create('trace', 'trans', 'parent',
+    function: TStackTracer
+    begin
+      Result := TTestStackTracer.Create;
+    end);
   try
     Assert.AreEqual(1, Integer(Length(LError.Exception.Stacktrace)),
       'Stacktrace must contain exactly one frame from the test tracer');

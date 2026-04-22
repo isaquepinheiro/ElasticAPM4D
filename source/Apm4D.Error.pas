@@ -28,7 +28,7 @@ type
     Fcontext: TContext;
     FStackTracer: TStackTracer;
   public
-    constructor Create(const ATraceId, ATransactionId, AParentId: string);
+    constructor Create(const ATraceId, ATransactionId, AParentId: string; const AStackTracerFactory: TStackTracerFactory);
     destructor Destroy; override;
 
     function ToJsonString: string;
@@ -49,13 +49,11 @@ type
 implementation
 
 uses
-  System.SysUtils, Apm4D.Share.Uuid, Apm4D.Share.TimestampEpoch, Apm4D.Settings;
+  System.SysUtils, Apm4D.Share.Uuid, Apm4D.Share.TimestampEpoch;
 
 { TError }
 
-constructor TError.Create(const ATraceId, ATransactionId, AParentId: string);
-var 
-  StackTrace: TStackTracer;
+constructor TError.Create(const ATraceId, ATransactionId, AParentId: string; const AStackTracerFactory: TStackTracerFactory);
 begin
   FId := TUUid.Get128b;
   FException := TErrorException.Create;
@@ -65,8 +63,12 @@ begin
   FTransaction_id := ATransactionId;
   FParent_id := AParentId;
   FCulprit := '';
-  FStackTracer := TApm4DSettings.CreateStackTracer;
-  if assigned(FStackTracer) then
+  
+  FStackTracer := nil;
+  if Assigned(AStackTracerFactory) then
+    FStackTracer := AStackTracerFactory();
+
+  if Assigned(FStackTracer) then
   begin
     FException.Stacktrace := FStackTracer.Get;
     FCulprit := FStackTracer.GetCulprit;

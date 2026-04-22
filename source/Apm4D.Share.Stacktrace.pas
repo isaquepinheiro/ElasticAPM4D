@@ -49,6 +49,8 @@ type
 
   TStackTracerClass = class of TStackTracer;
 
+  TStackTracerFactory = reference to function: TStackTracer;
+
 implementation
 
 { TStackTracer }

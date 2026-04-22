@@ -49,7 +49,7 @@ procedure TTestSpan.Should_Create_With_Hierarchy_Ids;
 var
   LSpan: TSpan;
 begin
-  LSpan := TSpan.Create('trace_id_123', 'trans_id_123', 'parent_id_123');
+  LSpan := TSpan.Create('trace_id_123', 'trans_id_123', 'parent_id_123', nil);
   try
     Assert.IsNotEmpty(LSpan.Id, 'Span ID should be generated');
     Assert.AreEqual('trace_id_123', LSpan.Trace_id);
@@ -64,7 +64,7 @@ procedure TTestSpan.Should_Start_With_Name_And_Type;
 var
   LSpan: TSpan;
 begin
-  LSpan := TSpan.Create('trace', 'trans', 'parent');
+  LSpan := TSpan.Create('trace', 'trans', 'parent', nil);
   try
     LSpan.Start('TestSpan', 'custom_type');
     Assert.AreEqual('TestSpan', LSpan.Name);
@@ -78,7 +78,7 @@ procedure TTestSpan.Should_Auto_Set_Action_For_Database;
 var
   LSpan: TSpan;
 begin
-  LSpan := TSpan.Create('trace', 'trans', 'parent');
+  LSpan := TSpan.Create('trace', 'trans', 'parent', nil);
   try
     LSpan.Start('DB Span', 'db');
     Assert.AreEqual('query', LSpan.Action, 'Action should be auto-set to query for db');
@@ -91,7 +91,7 @@ procedure TTestSpan.Should_Calculate_Duration_When_Ending;
 var
   LSpan: TSpan;
 begin
-  LSpan := TSpan.Create('trace', 'trans', 'parent');
+  LSpan := TSpan.Create('trace', 'trans', 'parent', nil);
   try
     LSpan.Start('TestSpan');
     Sleep(50);
@@ -107,7 +107,7 @@ procedure TTestSpan.Should_Pause_And_Unpause_Correctly;
 var
   LSpan: TSpan;
 begin
-  LSpan := TSpan.Create('trace', 'trans', 'parent');
+  LSpan := TSpan.Create('trace', 'trans', 'parent', nil);
   try
     LSpan.Start('TestSpan');
     Assert.IsFalse(LSpan.IsPaused, 'Should not start paused');
