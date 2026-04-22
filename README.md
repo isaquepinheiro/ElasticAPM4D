@@ -49,7 +49,7 @@ Compatível com **Elastic APM 7.11.1+** e testado em **Windows** e **Linux**.
 - ✅ **Interceptors Automáticos** - Rastreamento automático de UI, DataSets, Conexões DB
 - ✅ **Thread-Safe** - Suporte completo a multi-threading
 - ✅ **Rastreamento Distribuído** - Propagação de contexto entre serviços
-- ✅ **Stacktrace com JCL** - Rastreamento detalhado de pilha de chamadas
+- ✅ **Stacktrace Detalhado** - Suporte a JCL, MadExcept e EurekaLog
 
 ---
 
@@ -59,7 +59,7 @@ Compatível com **Elastic APM 7.11.1+** e testado em **Windows** e **Linux**.
 
 - Delphi 10.3+ (testado no Delphi 12 Yukon)
 - Elastic APM Server 7.11.1+
-- **[Opcional]** JEDI-JCL para stacktrace detalhado
+- **[Opcional]** JCL, MadExcept ou EurekaLog para stacktrace detalhado
 
 ### Passos
 
@@ -72,8 +72,10 @@ Compatível com **Elastic APM 7.11.1+** e testado em **Windows** e **Linux**.
    - Configure o caminho de busca para a pasta `source`
 
 3. **[Opcional] Ative Stacktrace**
-   - Instale JEDI-JCL: https://jedi-apilib.sourceforge.net/
-   - Adicione `jcl` nas definições condicionais do projeto
+   - Escolha seu provedor e adicione a diretiva correspondente nas definições condicionais do projeto:
+     - **JCL**: `jcl`
+     - **MadExcept**: `madExcept`
+     - **EurekaLog**: `EUREKALOG`
 
 ---
 
@@ -484,6 +486,18 @@ begin
   end;
 end;
 ```
+
+### Provedores de Stacktrace
+
+O Apm4D detecta automaticamente o melhor provedor de stacktrace disponível em tempo de compilação. Se múltiplas diretivas forem definidas, a prioridade é: MadExcept > EurekaLog > JCL.
+
+| Provedor | Diretiva Condicional | Requisito |
+|----------|----------------------|-----------|
+| **MadExcept** | `madExcept` | MadExcept instalado e ativo no projeto |
+| **EurekaLog** | `EUREKALOG` | EurekaLog instalado e ativo no projeto |
+| **JEDI JCL** | `jcl` | JCL instalado e configurado |
+
+> **Nota:** Não é necessário registrar manualmente o provedor. O `TApm4DSettings` fará a detecção e o registro automático assim que você adicionar a diretiva correspondente nas opções do seu projeto.
 
 ### Interceptors Automáticos
 

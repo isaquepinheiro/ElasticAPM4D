@@ -38,7 +38,7 @@ Compatible with **Elastic APM 7.11.1+** and tested on **Windows** and **Linux**.
 - ✅ **Automatic Interceptors** - Auto-tracking for UI, DataSets, DB Connections
 - ✅ **Thread-Safe** - Full multi-threading support
 - ✅ **Distributed Tracing** - Context propagation between services
-- ✅ **Stacktrace with JCL** - Detailed call stack tracing
+- ✅ **Detailed Stacktrace** - Support for JCL, MadExcept and EurekaLog
 
 ---
 
@@ -48,7 +48,7 @@ Compatible with **Elastic APM 7.11.1+** and tested on **Windows** and **Linux**.
 
 - Delphi 10.3+ (tested on Delphi 12 Yukon)
 - Elastic APM Server 7.11.1+
-- **[Optional]** JEDI-JCL for detailed stacktrace
+- **[Optional]** JCL, MadExcept or EurekaLog for detailed stacktrace
 
 ### Steps
 
@@ -69,8 +69,10 @@ Compatible with **Elastic APM 7.11.1+** and tested on **Windows** and **Linux**.
    - Configure search path to `source` folder
 
 5. **[Optional] Enable Stacktrace**
-   - Install JEDI-JCL: https://jedi-apilib.sourceforge.net/
-   - Add `jcl` to project conditional defines
+   - Choose your provider and add the corresponding directive to project conditional defines:
+     - **JCL**: `jcl`
+     - **MadExcept**: `madExcept`
+     - **EurekaLog**: `EUREKALOG`
 
 ---
 
@@ -167,6 +169,18 @@ begin
   end;
 end;
 ```
+
+### Stacktrace Providers
+
+Apm4D automatically detects the best available stacktrace provider at compile-time. If multiple directives are defined, the priority is: MadExcept > EurekaLog > JCL.
+
+| Provider | Conditional Directive | Requirement |
+|----------|-----------------------|-------------|
+| **MadExcept** | `madExcept` | MadExcept installed and active in the project |
+| **EurekaLog** | `EUREKALOG` | EurekaLog installed and active in the project |
+| **JEDI JCL** | `jcl` | JCL installed and configured |
+
+> **Note:** Manual provider registration is not required. `TApm4DSettings` will perform automatic detection and registration as soon as you add the corresponding directive to your project options.
 
 ### Automatic Interceptors
 

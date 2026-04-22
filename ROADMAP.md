@@ -2,7 +2,7 @@
 
 > Agente de Application Performance Monitoring nativo para Delphi integrado ao Elastic APM.
 
-**Última atualização:** 2026-04-21 18:15
+**Última atualização:** 2026-04-22 08:08
 
 ---
 
@@ -48,6 +48,8 @@
 - [x] Abstração de cliente HTTP (IHttpClient) — delivered v0.1.2 2026-04-21
 - [x] Testes de chamadas HTTP com mock — delivered v0.1.2 2026-04-21
 - [x] Suporte para MadExcept e EurekaLog — delivered 2026-04-21
+- [x] Interceptors automáticos (UI, DataSet, DBConnection) — delivered v1.1.0-dev 2026-04-22
+- [ ] (Awaiting next priority)
 
 ---
 
@@ -55,7 +57,6 @@
 
 Itens identificados mas não priorizados:
 
-- Interceptors automáticos (UI, DataSet, DBConnection)
 - Testes avançados de métricas do sistema (Metricsets customizados)
 
 ---
@@ -77,6 +78,6 @@ Backlog operacional sincronizado com este roadmap:
 
 Prioridade imediata para continuidade da trilha atual de testes:
 
-1. Fase 4 (Avancado com Mocks): abstracao HTTP e testes 2xx/4xx/5xx/timeout/conexao.
+1. [DEBT] Atualizar documentação README (PT/EN) para MadExcept e EurekaLog (#9).
 2. Nao-regressao: blindagem da captura de excecoes Delphi com stacktrace.
 3. Atualizar os checkboxes das fases apos fechamento da rodada de testes.
