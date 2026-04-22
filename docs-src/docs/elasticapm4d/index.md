@@ -12,6 +12,7 @@ ElasticAPM4D is a native Delphi APM agent that captures transactions, spans, err
 - [Quickstart](getting-started/quickstart.md)
 - [Architecture](architecture/overview.md)
 - [API](reference/api.md)
+- [Stacktrace Providers](guides/stacktrace-providers.md)
 - [Tests](tests/overview.md)
 
 ## Scope

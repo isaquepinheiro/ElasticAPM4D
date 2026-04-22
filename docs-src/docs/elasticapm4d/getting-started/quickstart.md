@@ -34,6 +34,16 @@ begin
 end;
 ```
 
+## Enabling Stacktrace
+
+To capture detailed stacktraces with file names and line numbers, add the conditional directive for your preferred provider to your project's **Conditional Defines**:
+
+- **MadExcept:** `madExcept`
+- **EurekaLog:** `EUREKALOG`
+- **JCL:** `jcl`
+
+The agent automatically detects and uses the first available provider from this list.
+
 ## Next steps
 
 - [Architecture](../architecture/overview.md)
