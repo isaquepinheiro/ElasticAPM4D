@@ -11,6 +11,7 @@ interface
 
 uses
   System.Classes,
+  System.RegularExpressions,
   Apm4D.Share.Stacktrace;
 
 type
@@ -19,15 +20,19 @@ type
     MAX_FRAMES = 15;
   private
     FStackTrace: TArray<TStacktrace>;
+    class var FRegExFunction: TRegEx;
+    class var FRegExLine: TRegEx;
+    class var FRegExUnit: TRegEx;
   protected
     function GetStackList: TStringList; virtual;
     function IsIgnoreUnit(const AUnitName: string): Boolean;
-    function ExtractValue(const AStr, ARegEX: string): string;
+    function ExtractValue(const AStr: string; const ARegEX: TRegEx): string;
     function GetUnitName(const AStr: string): string;
     function GetLine(const AStr: string): Integer;
     function GetFunctionName(const AStr: string): string;
   public
     constructor Create;
+    class constructor Create;
     function Get: TArray<TStacktrace>; override;
     function GetCulprit: string; override;
   end;
@@ -38,9 +43,16 @@ uses
 {$IFDEF EUREKALOG}
   ExceptionLog7, ECallStack,
 {$ENDIF}
-  System.SysUtils, System.RegularExpressions;
+  System.SysUtils;
 
 { TStacktraceEurekaLog }
+
+class constructor TStacktraceEurekaLog.Create;
+begin
+  FRegExFunction := TRegEx.Create('([a-zA-Z0-9_]+\.[a-zA-Z0-9_]+)', [roCompiled]);
+  FRegExLine := TRegEx.Create('line (\d+)', [roCompiled]);
+  FRegExUnit := TRegEx.Create('([a-zA-Z0-9_]+\.pas)', [roCompiled]);
+end;
 
 constructor TStacktraceEurekaLog.Create;
 var
@@ -85,12 +97,12 @@ begin
   end;
 end;
 
-function TStacktraceEurekaLog.ExtractValue(const AStr, ARegEX: string): string;
+function TStacktraceEurekaLog.ExtractValue(const AStr: string; const ARegEX: TRegEx): string;
 var
   LMatch: TMatch;
 begin
   try
-    LMatch := TRegEx.Match(AStr, ARegEX);
+    LMatch := ARegEX.Match(AStr);
     if LMatch.Success then
     begin
       if LMatch.Groups.Count > 1 then
@@ -125,12 +137,12 @@ end;
 function TStacktraceEurekaLog.GetFunctionName(const AStr: string): string;
 begin
   // EurekaLog often has format: Unit.Function
-  Result := ExtractValue(AStr, '([a-zA-Z0-9_]+\.[a-zA-Z0-9_]+)');
+  Result := ExtractValue(AStr, FRegExFunction);
 end;
 
 function TStacktraceEurekaLog.GetLine(const AStr: string): Integer;
 begin
-  Result := StrToIntDef(ExtractValue(AStr, 'line (\d+)'), 0);
+  Result := StrToIntDef(ExtractValue(AStr, FRegExLine), 0);
 end;
 
 function TStacktraceEurekaLog.GetStackList: TStringList;
@@ -152,7 +164,7 @@ end;
 
 function TStacktraceEurekaLog.GetUnitName(const AStr: string): string;
 begin
-  Result := ExtractValue(AStr, '([a-zA-Z0-9_]+\.pas)');
+  Result := ExtractValue(AStr, FRegExUnit);
   if Result.IsEmpty then
     Result := 'unknown';
     

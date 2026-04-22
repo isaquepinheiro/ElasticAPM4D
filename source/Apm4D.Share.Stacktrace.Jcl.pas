@@ -11,6 +11,7 @@ interface
 
 uses 
   System.Classes,
+  System.RegularExpressions,
   Apm4D.Share.Stacktrace;
   
 type
@@ -19,8 +20,16 @@ type
     MAX_FRAMES = 15; // Limit stacktrace to 15 most relevant frames
   private
     FStackTrace: TArray<TStacktrace>; 
+    class var FRegExValid: TRegEx;
+    class var FRegExClassName: TRegEx;
+    class var FRegExFunctionName1: TRegEx;
+    class var FRegExFunctionName2: TRegEx;
+    class var FRegExContextLine1: TRegEx;
+    class var FRegExContextLine2: TRegEx;
+    class var FRegExLine: TRegEx;
+    class var FRegExUnitNames: array[0..3] of TRegEx;
   protected
-    function ExtractValue(const AStr, ARegEX: string): string;
+    function ExtractValue(const AStr: string; const ARegEX: TRegEx): string;
     function GetLine(const AStr: string): Integer;
     function GetUnitName(const AStr: string): string;
     function GetClassName(const AStr: string): string;
@@ -31,6 +40,7 @@ type
     function IsIgnoreUnit(const AUnitName: string): Boolean;
   public
     constructor Create;
+    class constructor Create;
 
     function Get: TArray<TStacktrace>; override;
     function GetCulprit: string; override;
@@ -43,9 +53,25 @@ uses
 {$IFDEF jcl}
   JclDebug,
 {$ENDIF}
-{$ENDIF} System.IOUtils, System.SysUtils, System.Rtti, System.RegularExpressions;
+{$ENDIF} System.IOUtils, System.SysUtils, System.Rtti;
 
 { TStacktraceJCL }
+
+class constructor TStacktraceJCL.Create;
+begin
+  FRegExValid := TRegEx.Create('(?<=\])(.*?)(?=[(\+])', [roCompiled]);
+  FRegExClassName := TRegEx.Create('(\T[a-zA-Z0-9_]+)', [roCompiled]);
+  FRegExFunctionName1 := TRegEx.Create('(?<=\])(.*?)(?=[(\+])', [roCompiled]);
+  FRegExFunctionName2 := TRegEx.Create('(?<=\])(.*)', [roCompiled]);
+  FRegExContextLine1 := TRegEx.Create('(?<=\])(.*?)(?=\+)', [roCompiled]);
+  FRegExContextLine2 := TRegEx.Create('(?<=\])(.*)', [roCompiled]);
+  FRegExLine := TRegEx.Create('\(Line (?<linha>\d+)', [roCompiled]);
+  
+  FRegExUnitNames[0] := TRegEx.Create('\ ?"(?<arquivo>[0-9_a-zA-Z.]+)".*\)', [roCompiled]);
+  FRegExUnitNames[1] := TRegEx.Create('\] (vcl\.[a-zA-Z0-9_]+|Vcl\.[a-zA-Z0-9_]+)', [roCompiled]);
+  FRegExUnitNames[2] := TRegEx.Create('\] (system\.[a-zA-Z0-9_]+|System\.[a-zA-Z0-9_]+)', [roCompiled]);
+  FRegExUnitNames[3] := TRegEx.Create('\] ([a-zA-Z0-9_]+)', [roCompiled]);
+end;
 
 constructor TStacktraceJCL.Create;
 var
@@ -94,15 +120,15 @@ end;
 function TStacktraceJCL.IsValidStacktrace(const AStr: string): Boolean;
 begin
   Result := (AStr.Contains('[') and AStr.Contains(']')) and
-            (not ExtractValue(AStr, '(?<=\])(.*?)(?=[(\+])').Trim.IsEmpty);
+            (not ExtractValue(AStr, FRegExValid).Trim.IsEmpty);
 end;
 
-function TStacktraceJCL.ExtractValue(const AStr, ARegEX: string): string;
+function TStacktraceJCL.ExtractValue(const AStr: string; const ARegEX: TRegEx): string;
 var
   LMath: TMatch;
 begin
   try
-    LMath := TRegEx.Match(AStr, ARegEX);
+    LMath := ARegEX.Match(AStr);
     if LMath.Success then
     begin
       if LMath.Groups.Count > 1 then
@@ -118,21 +144,21 @@ end;
 
 function TStacktraceJCL.GetClassName(const AStr: string): string;
 begin
-  Result := ExtractValue(AStr, '(\T[a-zA-Z0-9_]+)');
+  Result := ExtractValue(AStr, FRegExClassName);
 end;
 
 function TStacktraceJCL.GetFunctionName(const AStr: string): string;
 begin
-  Result := ExtractValue(AStr, '(?<=\])(.*?)(?=[(\+])').Trim;
+  Result := ExtractValue(AStr, FRegExFunctionName1).Trim;
   if Result.IsEmpty then
-    Result := ExtractValue(AStr, '(?<=\])(.*)').Trim;
+    Result := ExtractValue(AStr, FRegExFunctionName2).Trim;
 end;
 
 function TStacktraceJCL.GetContextLine(const AStr: string): string;
 begin
-  Result := ExtractValue(AStr, '(?<=\])(.*?)(?=\+)');
+  Result := ExtractValue(AStr, FRegExContextLine1);
   if Result.IsEmpty then
-    Result := ExtractValue(AStr, '(?<=\])(.*)');
+    Result := ExtractValue(AStr, FRegExContextLine2);
     
   if (not Result.IsEmpty) and (Pos('(', Result) > 0) and (not Result.Contains(')')) then
     Result := Result + ')';
@@ -157,7 +183,7 @@ end;
 
 function TStacktraceJCL.GetLine(const AStr: string): Integer;
 begin
-  Result := StrToIntDef(ExtractValue(AStr, '\(Line (?<linha>\d+)'), 0);
+  Result := StrToIntDef(ExtractValue(AStr, FRegExLine), 0);
 end;
 
 // JclCreateStackList
@@ -183,11 +209,6 @@ begin
 end;
 
 function TStacktraceJCL.GetUnitName(const AStr: string): string;
-const
-  LIST_REGEx_UNIT_NAME: array [0 .. 3] of string = ('\ ?"(?<arquivo>[0-9_a-zA-Z.]+)".*\)',
-    '\] (vcl\.[a-zA-Z0-9_]+|Vcl\.[a-zA-Z0-9_]+)', '\] (system\.[a-zA-Z0-9_]+|System\.[a-zA-Z0-9_]+)',
-    '\] ([a-zA-Z0-9_]+)');
-
   procedure FormatExtension(var AStr: string);
   begin
     if not AStr.ToLower.EndsWith('.pas') then
@@ -197,9 +218,9 @@ const
 var
   LIndex: Integer;
 begin
-  for LIndex := 0 to Pred(Length(LIST_REGEx_UNIT_NAME)) do
+  for LIndex := 0 to Pred(Length(FRegExUnitNames)) do
   begin
-    Result := ExtractValue(AStr, LIST_REGEx_UNIT_NAME[LIndex]);
+    Result := ExtractValue(AStr, FRegExUnitNames[LIndex]);
     if not Result.IsEmpty then
       Break;
   end;

@@ -6,6 +6,7 @@ uses
   DUnitX.TestFramework,
   System.Classes,
   System.SysUtils,
+  System.RegularExpressions,
   Apm4D.Share.Stacktrace,
   Apm4D.Share.Stacktrace.Jcl;
 
@@ -70,7 +71,7 @@ end;
 
 function TTestStacktraceJCL.CallExtractValue(const AStr, ARegEX: string): string;
 begin
-  Result := ExtractValue(AStr, ARegEX);
+  Result := ExtractValue(AStr, TRegEx.Create(ARegEX));
 end;
 
 function TTestStacktraceJCL.CallGetLine(const AStr: string): Integer;

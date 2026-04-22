@@ -11,6 +11,7 @@ interface
 
 uses
   System.Classes,
+  System.RegularExpressions,
   Apm4D.Share.Stacktrace;
 
 type
@@ -19,15 +20,21 @@ type
     MAX_FRAMES = 15;
   private
     FStackTrace: TArray<TStacktrace>;
+    class var FRegExUnit1: TRegEx;
+    class var FRegExUnit2: TRegEx;
+    class var FRegExLine: TRegEx;
+    class var FRegExFunction1: TRegEx;
+    class var FRegExFunction2: TRegEx;
   protected
     function GetStackList: TStringList; virtual;
     function IsIgnoreUnit(const AUnitName: string): Boolean;
-    function ExtractValue(const AStr, ARegEX: string): string;
+    function ExtractValue(const AStr: string; const ARegEX: TRegEx): string;
     function GetUnitName(const AStr: string): string;
     function GetLine(const AStr: string): Integer;
     function GetFunctionName(const AStr: string): string;
   public
     constructor Create;
+    class constructor Create;
     function Get: TArray<TStacktrace>; override;
     function GetCulprit: string; override;
   end;
@@ -38,9 +45,18 @@ uses
 {$IFDEF madExcept}
   madExcept,
 {$ENDIF}
-  System.SysUtils, System.RegularExpressions;
+  System.SysUtils;
 
 { TStacktraceMadExcept }
+
+class constructor TStacktraceMadExcept.Create;
+begin
+  FRegExUnit1 := TRegEx.Create('\s+([a-zA-Z0-9_]+\.pas)\s+', [roCompiled]);
+  FRegExUnit2 := TRegEx.Create('\s+([a-zA-Z0-9_]+)\s+\d+\s+', [roCompiled]);
+  FRegExLine := TRegEx.Create('\s+(\d+)\s+', [roCompiled]);
+  FRegExFunction1 := TRegEx.Create('([a-zA-Z0-9_]+\.[a-zA-Z0-9_]+)$', [roCompiled]);
+  FRegExFunction2 := TRegEx.Create('([a-zA-Z0-9_]+)$', [roCompiled]);
+end;
 
 constructor TStacktraceMadExcept.Create;
 var
@@ -85,12 +101,12 @@ begin
   end;
 end;
 
-function TStacktraceMadExcept.ExtractValue(const AStr, ARegEX: string): string;
+function TStacktraceMadExcept.ExtractValue(const AStr: string; const ARegEX: TRegEx): string;
 var
   LMatch: TMatch;
 begin
   try
-    LMatch := TRegEx.Match(AStr, ARegEX);
+    LMatch := ARegEX.Match(AStr);
     if LMatch.Success then
     begin
       if LMatch.Groups.Count > 1 then
@@ -126,15 +142,15 @@ function TStacktraceMadExcept.GetFunctionName(const AStr: string): string;
 begin
   // MadExcept format: ... [Unit] [Line] [Function]
   // We try to extract the last part of the line which is usually the function name
-  Result := ExtractValue(AStr, '([a-zA-Z0-9_]+\.[a-zA-Z0-9_]+)$');
+  Result := ExtractValue(AStr, FRegExFunction1);
   if Result.IsEmpty then
-    Result := ExtractValue(AStr, '([a-zA-Z0-9_]+)$');
+    Result := ExtractValue(AStr, FRegExFunction2);
 end;
 
 function TStacktraceMadExcept.GetLine(const AStr: string): Integer;
 begin
   // Try to find a standalone number which is often the line number in MadExcept
-  Result := StrToIntDef(ExtractValue(AStr, '\s+(\d+)\s+'), 0);
+  Result := StrToIntDef(ExtractValue(AStr, FRegExLine), 0);
 end;
 
 function TStacktraceMadExcept.GetStackList: TStringList;
@@ -147,9 +163,9 @@ end;
 
 function TStacktraceMadExcept.GetUnitName(const AStr: string): string;
 begin
-  Result := ExtractValue(AStr, '\s+([a-zA-Z0-9_]+\.pas)\s+');
+  Result := ExtractValue(AStr, FRegExUnit1);
   if Result.IsEmpty then
-    Result := ExtractValue(AStr, '\s+([a-zA-Z0-9_]+)\s+\d+\s+'); // Unit before line number
+    Result := ExtractValue(AStr, FRegExUnit2); // Unit before line number
     
   if Result.IsEmpty then
     Result := 'unknown';
